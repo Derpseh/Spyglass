@@ -11,6 +11,7 @@ Here, things are a bit more involved. First off, you'll need python 2.7, so if y
 Next off, you'll need one of the required dependencies. To do that, head into your terminal/command line and enter the following:
 
 sudo easy_install pip
+
 sudo pip install openpyxl
 
 A couple warnings might crop up, but those shouldn't cause any actual problems as far as running the program goes
@@ -26,5 +27,7 @@ Calibration: Spyglass, at its present state, relies on manual input to determine
 
 1: Find the length of major and minor updates. This can be accomplished by going to the activity page of a late-updating region (I like to use Spear Danes for this)
 Look for messages like the following: [nation]'s influence has increased from X to Y. Pick up the timestamp there, for the last two updates. Major happens at around 12 AM, EST, and minor at around 12 PM.
+
 2: Convert the time into seconds. This is fairly easy- 3600*hours + 60*minutes + seconds
+
 3: In your folder, you'll find a text file labelled UpdTime. Open that up, and plug in your numbers; minor and major, respectively. Save and close, and it'll use those numbers the next time you run Spyglass.
