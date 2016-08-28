@@ -3,7 +3,7 @@ import urllib
 import gzip
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Alignment
-from openpyxl.styles.colors import RED, GREEN
+from openpyxl.styles.colors import RED, GREEN, YELLOW
 import xml.etree.ElementTree as ET
 import math
 from datetime import datetime
@@ -22,8 +22,10 @@ except:
 	quit()
 print "Pulling Data Dump..."
 # Pulling a list of regions that are founderless and non-passworded. Eventually, we'll go through and highlight those on the sheet
-req = urllib2.Request('http://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=founderless,-password', None, headers)
+req = urllib2.Request('http://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=-password', None, headers)
+req2 = urllib2.Request('http://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=founderless', None, headers)
 html = urllib2.urlopen(req).read()
+html2 = urllib2.urlopen(req2).read()
 # Grabbing the data dump and saving
 urllib.urlretrieve ('http://www.nationstates.net/pages/regions.xml.gz', 'regions.xml.gz')
 # Gotta get the date so we can attach it to the filename afterwards.So, I suppose, run the thing sometime close to midnight, and you might end up with the wrong date.
@@ -31,6 +33,7 @@ now = datetime.now()
 YMD = '%s-%s-%s' % (now.year, now.month, now.day)
 redFill = PatternFill(start_color = RED, end_color = RED, fill_type = 'solid')
 greenFill = PatternFill(start_color = GREEN, end_color = GREEN, fill_type = 'solid')
+yellowFill = PatternFill(start_color = YELLOW, end_color = YELLOW, fill_type = 'solid')
 
 if os.path.isfile('UpdTime'):
 	with open('UpdTime', 'r') as UpdFile:
@@ -59,12 +62,17 @@ RegionList = []
 RegionURLList = []
 NumNationList = []
 DelVoteList = []
+ExecList = []
 
 # Sanitize our founderless regions list a wee bit, 'cause at the moment, it's xml, and xml is gross.
 print "Processing data..."
 root = ET.fromstring(html)
-for EVENT in root.iter('REGIONS'):
+root2 = ET.fromstring(html2)
+for EVENT in root2.iter('REGIONS'):
     UnfoundedString = EVENT.text
+for EVENT in root.iter('REGIONS'):
+    PWlessString = EVENT.text
+PWlessList = PWlessString.split(',')
 UnfoundedList = UnfoundedString.split(',')
 # Not entirely sure why I don't just keep this within the program, rather than saving and reloading it, but oh wells.
 with open('regions.xml', 'r') as myfile:
@@ -80,6 +88,15 @@ for EVENT in root.iter('NUMNATIONS'):
     NumNationList = NumNationList + [int(EVENT.text)]
 for EVENT in root.iter('DELEGATEVOTES'):
     DelVoteList = DelVoteList + [int(EVENT.text)]
+for EVENT in root.iter('DELEGATEAUTH'):
+    AuthString = str(EVENT.text)
+    if AuthString[0] == 'X':
+        print "True: " + AuthString
+        ExecList = ExecList + [True]
+    else:
+        print "False: " + AuthString
+        ExecList = ExecList + [False]
+
 # Grabbing the cumulative number of nations that've updated by the time a region has.
 CumulNationList = []
 for a in NumNationList:
@@ -139,12 +156,19 @@ counter = 0
 
 for a in RegionList:
 # If a region's founderless, highlight it for easy reference. Add a tilde, 'cause my spreadsheet program doesn't do filtering by colour
-    if a in UnfoundedList:
+    b = a
+    if a in PWlessList and ExecList[counter] == True:
+        ws.cell(row = counter + 2, column = 1).fill = yellowFill
+        ws.cell(row = counter + 2, column = 2).fill = yellowFill
+        b = a + '~'
+    if a in UnfoundedList and a in PWlessList:
         ws.cell(row = counter + 2, column = 1).fill = greenFill
         ws.cell(row = counter + 2, column = 2).fill = greenFill
         b = a + '~'
-    else:
-        b = a
+    if a not in PWlessList:
+        ws.cell(row = counter + 2, column = 1).fill = redFill
+        ws.cell(row = counter + 2, column = 2).fill = redFill
+        b = a + '*'
     ws.cell(row = counter + 2, column = 1).value = b
     ws.cell(row = counter + 2, column = 2).value = RegionURLList[counter]
     ws.cell(row = counter + 2, column = 3).value = NumNationList[counter]
