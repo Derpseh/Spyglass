@@ -17,7 +17,7 @@ sudo pip install openpyxl
 A couple warnings might crop up, but those shouldn't cause any actual problems as far as running the program goes
 Now, navigate to the Source subfolder of Spyglass, and enter the following:
 
-python Sheet.py
+python spyglass.py
 
 As above, you'll be prompted for your nation name, and then things will chug along for a couple minutes, before creating the final sheet.
 
