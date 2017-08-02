@@ -1,6 +1,8 @@
 # Spyglass
 Nationstates Sheet-generator for easily finding approximate update times!
 
+**[Download (.zip for all platforms)](https://github.com/khronion/Spyglass/archive/master.zip)**
+
 ## Running Spyglass
 
 ### Windows
