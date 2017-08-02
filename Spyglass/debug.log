@@ -1,0 +1,11 @@
+[2017-07-22 20:13:47] INFO Spyglass started with arguments: 
+[2017-07-22 20:13:47] INFO User Nation: Khronion
+[2017-07-22 20:13:47] INFO Out File: SpyglassSheet2017-7-22.xlsx
+[2017-07-22 20:13:48] INFO Minor length: 1862
+[2017-07-22 20:13:48] INFO Major length: 2769
+[2017-07-22 20:13:48] INFO Downloading data dump...
+[2017-07-22 20:13:52] INFO Download complete!
+[2017-07-22 20:13:53] INFO Processing data...
+[2017-07-22 20:14:10] INFO Done processing data! Saving sheet.
+[2017-07-22 20:14:15] INFO Successfully saved to SpyglassSheet2017-7-22.xlsx
+[2017-07-22 20:14:15] INFO Spyglass run complete. Exiting...
