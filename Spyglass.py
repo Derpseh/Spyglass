@@ -23,7 +23,6 @@ from datetime import datetime
 import os
 import urllib2
 import sys
-import UpdTime
 
 logpath = "debug.log"
 
@@ -101,10 +100,9 @@ except urllib2.HTTPError:
         write_log("ERR  {} is not a valid nation. Terminating.".format(UAgent))
     sys.exit()
 
-# Query NS for update times. No rate limit as total # of queries is well below limit.
-UTimes = UpdTime.UpdTime(headers['User-Agent']).get()
-MinorTime = int(UTimes[0])
-MajorTime = int(UTimes[1])
+# Update lengths are now set to 45m and 60m, per word of [v]
+MinorTime = 2700
+MajorTime = 3600
 
 if log:
     write_log("INFO Minor length: " + str(MinorTime))
