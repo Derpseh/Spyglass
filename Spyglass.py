@@ -17,7 +17,7 @@ import gzip
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Alignment
 from openpyxl.styles.colors import RED, GREEN, YELLOW
-import xml.etree.ElementTree as ElementTree
+import xml.etree.cElementTree as ElementTree
 import math
 from datetime import datetime
 import os
@@ -162,9 +162,6 @@ with open('regions.xml', 'r') as myfile:
 # Pulling, in order, region names, converting to a region url, number of nations in that region, and voting power that
 # delegate has.
 
-if log:
-    write_log("INFO Processing data...")
-
 # KH: Replaced some assignments with augmented assignments (e.g. x += y instead of x = x + y)
 root = ElementTree.fromstring(regions)
 for EVENT in root.iter('NAME'):
@@ -179,10 +176,8 @@ for EVENT in root.iter('DELEGATEVOTES'):
 for EVENT in root.iter('DELEGATEAUTH'):
     AuthString = str(EVENT.text)
     if AuthString[0] == 'X':
-        print "True: " + AuthString
         ExecList += [True]
     else:
-        print "False: " + AuthString
         ExecList += [False]
 
 # Grabbing the cumulative number of nations that've updated by the time a region has.
