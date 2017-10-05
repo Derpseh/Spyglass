@@ -28,6 +28,8 @@ Additionally, regions are color-coded in column H based on their endorsement cou
 
 - RED — Region has zero WAD endorsements
 
+Spyglass now also lists a region's embassies and the first 140 characters from their WFE in columns I and J. These columns can be filtered to quickly identify regions that are not yet or currently tagged.
+
 ### Supported Terminal Arguments
 
 If you need Spyglass to run unattended (e.g. through a scheduled task or Cron job), you can use the following arguments

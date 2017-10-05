@@ -145,6 +145,8 @@ ws.sheet_properties.tabColor = "FFB1B1"
 
 RegionList = []
 RegionURLList = []
+RegionWFEList = []
+RegionEmbassyList = []
 NumNationList = []
 DelVoteList = []
 ExecList = []
@@ -179,6 +181,20 @@ for EVENT in root.iter('DELEGATEAUTH'):
         ExecList += [True]
     else:
         ExecList += [False]
+
+# KH: gather WFE info, first 140 characters only
+for EVENT in root.iter('FACTBOOK'):
+    try:
+        RegionWFEList += [EVENT.text[:140]]
+    except TypeError:
+        RegionWFEList += [""]
+# KH: gather embassy list
+for EVENT in root.iter('EMBASSIES'):
+    list = []
+    for embassy in EVENT.iter('EMBASSY'):
+        list += [embassy.text]
+    RegionEmbassyList += [','.join(list)]
+
 
 # Grabbing the cumulative number of nations that've updated by the time a region has.
 CumulNationList = []
@@ -218,22 +234,25 @@ ws['E1'].value = 'Minor Upd.'
 ws['F1'].value = 'Major Upd.'
 ws['G1'].value = 'Del. Votes'
 ws['H1'].value = 'Del. Endos'
-ws['J1'].value = 'World '
-ws['K1'].value = 'Data'
-ws['J2'].value = 'Nations'
-ws['J3'].value = 'Last Major'
-ws['J4'].value = 'Secs/Nation'
-ws['J5'].value = 'Nations/Sec'
-ws['J6'].value = 'Last Minor'
-ws['J7'].value = 'Secs/Nation'
-ws['J8'].value = 'Nations/Sec'
-ws['K2'].value = CumulNations
-ws['K3'].value = MajorTime
-ws['K4'].value = MajorNatTime
-ws['K5'].value = 1 / MajorNatTime
-ws['K6'].value = MinorTime
-ws['K7'].value = MinorNatTime
-ws['K8'].value = 1 / MinorNatTime
+ws['I1'].value = 'Embassies'
+ws['J1'].value = 'WFE'
+
+ws['L1'].value = 'World '
+ws['M1'].value = 'Data'
+ws['L2'].value = 'Nations'
+ws['L3'].value = 'Last Major'
+ws['L4'].value = 'Secs/Nation'
+ws['L5'].value = 'Nations/Sec'
+ws['L6'].value = 'Last Minor'
+ws['L7'].value = 'Secs/Nation'
+ws['L8'].value = 'Nations/Sec'
+ws['M2'].value = CumulNations
+ws['M3'].value = MajorTime
+ws['M4'].value = MajorNatTime
+ws['M5'].value = 1 / MajorNatTime
+ws['M6'].value = MinorTime
+ws['M7'].value = MinorNatTime
+ws['M8'].value = 1 / MinorNatTime
 
 # There's probably a better way of doing this, but my coding skills are dubious :^)
 # Anyways, actually pasting the information from our various lists into the spreadsheet.
@@ -271,6 +290,9 @@ for a in RegionList:
     ws.cell(row=counter + 2, column=6).alignment = Alignment(horizontal="right")
     ws.cell(row=counter + 2, column=7).value = DelVoteList[counter]
     ws.cell(row=counter + 2, column=8).value = DelVoteList[counter] - 1
+    ws.cell(row=counter + 2, column=9).value = RegionEmbassyList[counter]
+    ws.cell(row=counter + 2, column=10).value = RegionWFEList[counter]
+
     # Highlight delegate-less regions. They're good for tagging, or whatever~
     if DelVoteList[counter] == 0:
         ws.cell(row=counter + 2, column=8).fill = redFill

@@ -119,3 +119,4 @@ venv.bak/
 .xlsx
 regions.xml
 regions.xml.gz
+.idea
