@@ -20,7 +20,6 @@ Excel's built in filter function to quickly identify targets.
 - GREEN — Region is founderless and passwordless
 - YELLOW — Region has an executive WA delegate and is passwordless
 - RED — Region has non-executive WA delegate and is passwordless
-
 - `~` — Region can be tagged
 - `*` — Region has non-executive WA delegate
 
@@ -38,6 +37,7 @@ to control its behavior.
 - `-n NATION` Specify Nation to identify user by. In order to comply with NationStates API rules, this must be the user's nation. Use underscores instead of spaces.
 - `-o OUTFILE` Specify path to write the generated timesheet in XLSX format to.
 - `-s` Suppress creating a debug log file. Log files are written to the current working directory.
-- `-l PATH` Write debug log to specified path
+- `-l PATH` Write debug log to specified path.
+- `-m` Suppress the generation of embassies. This makes it easier to search a sheet for a specific nation by name.
 
 If run without arguments, Spyglass runs in interactive mode and outputs to the working directory.

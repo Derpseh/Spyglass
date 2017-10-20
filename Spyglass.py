@@ -1,17 +1,9 @@
 #!/usr/bin/env python2
 
-# Spyglass
+# Spyglass v0.4
 # Source code by Derps aka Panzer Vier
 # Modifications made by Khronion (KH)
 
-# Summary of KH changes:
-# - Spyglass accepts certain arguments which can be used to automate its execution
-# - UpdTime class used to automatically grab update times when the script is run
-# - Some small changes to align with best practices
-
-# Last updated 7/22/2017: Deal with certain update length edge cases due to new update speed
-
-# Whee, lots of imports!
 import urllib
 import gzip
 from openpyxl import Workbook
@@ -47,10 +39,14 @@ if "-h" in sys.argv or "--help" in sys.argv:
           " -o OUTFILE   File to output the generated timesheet in XLSX format to.\n" \
           " -s           Suppress creating a debug log file. Log files are written to\n" \
           "              the current working directory.\n" \
-          " -l PATH      Write debug log to specified path.\n"
+          " -l PATH      Write debug log to specified path.\n" \
+          " -m           Generate a minimized sheet without WFEs and embassies\n"
     print "If run without arguments, Spyglass runs in interactive mode and outputs to its\n" \
           "working directory."
     sys.exit()
+
+process_embassies = True
+log = True
 
 # set nation name
 if "-n" in sys.argv:
@@ -73,8 +69,10 @@ else:
 if "-s" in sys.argv:
     log = False
 
+if "-m" in sys.argv:
+    process_embassies = False
+
 else:
-    log = True
     if "-l" in sys.argv:
         logpath = sys.argv[sys.argv.index("-l") + 1]
     write_log("INFO Spyglass started with arguments: " + " ".join(sys.argv[1:]))
@@ -108,7 +106,7 @@ if log:
     write_log("INFO Minor length: " + str(MinorTime))
     write_log("INFO Major length: " + str(MajorTime))
 
-print "Pulling Data Dump..."
+
 # Pulling a list of regions that are founderless and non-passworded. Eventually, we'll go through and highlight those
 # on the sheet
 
@@ -120,8 +118,10 @@ req = urllib2.Request('https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbyt
 req2 = urllib2.Request('https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=founderless', None, headers)
 html = urllib2.urlopen(req).read()
 html2 = urllib2.urlopen(req2).read()
+
 # Grabbing the data dump and saving
-urllib.urlretrieve('http://www.nationstates.net/pages/regions.xml.gz', 'regions.xml.gz')
+print "Pulling Data Dump..."
+urllib.urlretrieve('https://www.nationstates.net/pages/regions.xml.gz', 'regions.xml.gz')
 
 if log:
     write_log("INFO Download complete!")
@@ -150,6 +150,7 @@ RegionEmbassyList = []
 NumNationList = []
 DelVoteList = []
 ExecList = []
+MajorList = []
 
 # Sanitize our founderless regions list a wee bit, 'cause at the moment, it's xml, and xml is gross.
 print "Processing data..."
@@ -182,18 +183,24 @@ for EVENT in root.iter('DELEGATEAUTH'):
     else:
         ExecList += [False]
 
-# KH: gather WFE info, first 140 characters only
+# KH: pull major times from daily dump
+for EVENT in root.iter('LASTUPDATE'):
+    MajorList += [int(EVENT.text)]
+
+# KH: gather WFE info
 for EVENT in root.iter('FACTBOOK'):
     try:
-        RegionWFEList += [EVENT.text[:140]]
-    except TypeError:
+        RegionWFEList += [EVENT.text]
+    except TypeError:  # no WFE
         RegionWFEList += [""]
+
 # KH: gather embassy list
 for EVENT in root.iter('EMBASSIES'):
-    list = []
-    for embassy in EVENT.iter('EMBASSY'):
-        list += [embassy.text]
-    RegionEmbassyList += [','.join(list)]
+    embassies = []
+    if process_embassies:
+        for embassy in EVENT.iter('EMBASSY'):
+            embassies += [embassy.text]
+    RegionEmbassyList += [','.join(embassies)]
 
 
 # Grabbing the cumulative number of nations that've updated by the time a region has.
@@ -208,33 +215,35 @@ for a in NumNationList:
 # approximation anyway, so...
 CumulNations = CumulNationList[-1]
 MinorNatTime = float(MinorTime) / CumulNations
-MajorNatTime = float(MajorTime) / CumulNations
 MinTime = []
 MajTime = []
 
 # Getting the approximate major/minor update times.
 for a in CumulNationList:
-    temptime = round(a * MinorNatTime, 1)
-    temptime2 = round(a * MajorNatTime, 1)
+    temptime = int(a * MinorNatTime)
     tempsecs = temptime % 60
     tempmins = int(math.floor(temptime / 60) % 60)
     temphours = int(math.floor(temptime / 3600))
-    tempsecs2 = temptime2 % 60
-    tempmins2 = int(math.floor(temptime2 / 60) % 60)
-    temphours2 = int(math.floor(temptime2 / 3600))
     MinTime.extend(['%s:%s:%s' % (temphours, tempmins, tempsecs)])
-    MajTime.extend(['%s:%s:%s' % (temphours2, tempmins2, tempsecs2)])
+
+for a in MajorList:
+    temptime = a - MajorList[0]
+    tempsecs = temptime % 60
+    tempmins = int(math.floor(temptime / 60) % 60)
+    temphours = int(math.floor(temptime / 3600))
+    MajTime.extend(['%s:%s:%s' % (temphours, tempmins, tempsecs)])
 
 # Splashing some headers and stuff onto the spreadsheet for legibility purposes!
 ws['A1'].value = 'Regions'
 ws['B1'].value = 'Region Link'
 ws['C1'].value = '# Nations'
 ws['D1'].value = 'Tot. Nations'
-ws['E1'].value = 'Minor Upd.'
-ws['F1'].value = 'Major Upd.'
+ws['E1'].value = 'Minor Upd. (est)'
+ws['F1'].value = 'Major Upd. (true)'
 ws['G1'].value = 'Del. Votes'
 ws['H1'].value = 'Del. Endos'
-ws['I1'].value = 'Embassies'
+if process_embassies:
+    ws['I1'].value = 'Embassies'
 ws['J1'].value = 'WFE'
 
 ws['L1'].value = 'World '
@@ -247,9 +256,9 @@ ws['L6'].value = 'Last Minor'
 ws['L7'].value = 'Secs/Nation'
 ws['L8'].value = 'Nations/Sec'
 ws['M2'].value = CumulNations
-ws['M3'].value = MajorTime
-ws['M4'].value = MajorNatTime
-ws['M5'].value = 1 / MajorNatTime
+ws['M3'].value = MajorList[-1] - MajorList[0]
+ws['M4'].value = float(MajorList[-1] - MajorList[0]) / CumulNations
+ws['M5'].value = 1 / (float(MajorList[-1] - MajorList[0]) / CumulNations)
 ws['M6'].value = MinorTime
 ws['M7'].value = MinorNatTime
 ws['M8'].value = 1 / MinorNatTime
@@ -292,6 +301,7 @@ for a in RegionList:
     ws.cell(row=counter + 2, column=8).value = DelVoteList[counter] - 1
     ws.cell(row=counter + 2, column=9).value = RegionEmbassyList[counter]
     ws.cell(row=counter + 2, column=10).value = RegionWFEList[counter]
+    ws.cell(row=counter + 2, column=11).value = " "
 
     # Highlight delegate-less regions. They're good for tagging, or whatever~
     if DelVoteList[counter] == 0:

@@ -120,3 +120,5 @@ venv.bak/
 regions.xml
 regions.xml.gz
 .idea
+*.xlsx
+/setup.py
