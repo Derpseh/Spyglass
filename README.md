@@ -1,5 +1,7 @@
 Nationstates Sheet-generator for easily finding approximate update times
 
+[Latest release](https://github.com/khronion/Spyglass/releases)
+
 # Running Spyglass
 
 You will need a working Python 2.x installation with [OpenPyXL](https://openpyxl.readthedocs.io/en/default/) to run Spyglass. Simply run the following to use Spyglass:
