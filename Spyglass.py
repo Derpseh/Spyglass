@@ -57,6 +57,14 @@ else:
     YMD = '%s-%s-%s' % (now.year, now.month, now.day)
     filename = 'SpyglassSheet' + YMD + '.xlsx'
 
+    process_embassies = None
+    while process_embassies is None:
+        emb_check = str(raw_input("Include region embassies? (Y/N): ")).lower()
+        if emb_check == 'y':
+            process_embassies = True
+        elif emb_check == 'n':
+            process_embassies = False
+
 # set output filename
 if "-o" in sys.argv:
     filename = sys.argv[sys.argv.index("-o") + 1]
