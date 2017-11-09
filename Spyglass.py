@@ -24,6 +24,14 @@ def write_log(text):
     with open(logpath, "a") as out:
         print >> out,  '[{:%Y-%m-%d %H:%M:%S}] '.format(datetime.now()) + text
 
+
+# method for getting user input
+def query(text, options):
+    while True:
+        response = raw_input(text)
+        if response in options:
+            return response
+
 # parse arguments, if any...
 
 # show help message and terminate
@@ -57,13 +65,8 @@ else:
     YMD = '%s-%s-%s' % (now.year, now.month, now.day)
     filename = 'SpyglassSheet' + YMD + '.xlsx'
 
-    process_embassies = None
-    while process_embassies is None:
-        emb_check = str(raw_input("Include region embassies? (Y/N): ")).lower()
-        if emb_check == 'y':
-            process_embassies = True
-        elif emb_check == 'n':
-            process_embassies = False
+    if query("Include region embassies? (y/n) ", ['y', 'n']) == 'n':
+        process_embassies = False
 
 # set output filename
 if "-o" in sys.argv:
@@ -106,9 +109,20 @@ except urllib2.HTTPError:
         write_log("ERR  {} is not a valid nation. Terminating.".format(UAgent))
     sys.exit()
 
-# Update lengths are now set to 45m and 60m, per word of [v]
-MinorTime = 2700
-MajorTime = 3600
+# Update lengths are now set to 44m and 59m, per word of [v]
+
+if query("Do you want to manually specify update lengths? (y/n) ", ['y', 'n']) == 'y':
+    try:
+        MinorTime = int(input("Minor Time, seconds (2640): "))
+    except SyntaxError:
+        MinorTime = 2640
+    try:
+        MajorTime = int(input("Major Time, seconds (3540): "))
+    except SyntaxError:
+        MajorTime = 3540
+else:
+    MinorTime = 2640
+    MajorTime = 3540
 
 if log:
     write_log("INFO Minor length: " + str(MinorTime))
