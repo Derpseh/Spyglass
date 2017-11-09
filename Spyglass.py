@@ -120,7 +120,9 @@ if query("Do you want to manually specify update lengths? (y/n) ", ['y', 'n']) =
         MajorTime = int(input("Major Time, seconds (3540): "))
     except SyntaxError:
         MajorTime = 3540
+    SpeedOverride = True
 else:
+    SpeedOverride = True
     MinorTime = 2640
     MajorTime = 3540
 
@@ -237,6 +239,7 @@ for a in NumNationList:
 # approximation anyway, so...
 CumulNations = CumulNationList[-1]
 MinorNatTime = float(MinorTime) / CumulNations
+MajorNatTime = float(MajorTime) / CumulNations
 MinTime = []
 MajTime = []
 
@@ -248,12 +251,21 @@ for a in CumulNationList:
     temphours = int(math.floor(temptime / 3600))
     MinTime.extend(['%s:%s:%s' % (temphours, tempmins, tempsecs)])
 
-for a in MajorList:
-    temptime = a - MajorList[0]
-    tempsecs = temptime % 60
-    tempmins = int(math.floor(temptime / 60) % 60)
-    temphours = int(math.floor(temptime / 3600))
-    MajTime.extend(['%s:%s:%s' % (temphours, tempmins, tempsecs)])
+# If user specifies update length, use special handling.
+if SpeedOverride:
+    for a in CumulNationList:
+        temptime = int(a * MajorNatTime)
+        tempsecs = temptime % 60
+        tempmins = int(math.floor(temptime / 60) % 60)
+        temphours = int(math.floor(temptime / 3600))
+        MajTime.extend(['%s:%s:%s' % (temphours, tempmins, tempsecs)])
+else:
+    for a in MajorList:
+        temptime = a - MajorList[0]
+        tempsecs = temptime % 60
+        tempmins = int(math.floor(temptime / 60) % 60)
+        temphours = int(math.floor(temptime / 3600))
+        MajTime.extend(['%s:%s:%s' % (temphours, tempmins, tempsecs)])
 
 # Splashing some headers and stuff onto the spreadsheet for legibility purposes!
 ws['A1'].value = 'Regions'
