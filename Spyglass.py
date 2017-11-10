@@ -122,7 +122,7 @@ if query("Do you want to manually specify update lengths? (y/n) ", ['y', 'n']) =
         MajorTime = 3540
     SpeedOverride = True
 else:
-    SpeedOverride = True
+    SpeedOverride = False
     MinorTime = 2640
     MajorTime = 3540
 
