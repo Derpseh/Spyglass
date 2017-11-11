@@ -56,6 +56,10 @@ if "-h" in sys.argv or "--help" in sys.argv:
 process_embassies = True
 log = True
 
+SpeedOverride = False
+MinorTime = 2640
+MajorTime = 3540
+
 # set nation name
 if "-n" in sys.argv:
     UAgent = sys.argv[sys.argv.index("-n") + 1]
@@ -67,6 +71,18 @@ else:
 
     if query("Include region embassies? (y/n) ", ['y', 'n']) == 'n':
         process_embassies = False
+
+    # Update lengths are now set to 44m and 59m, per word of [v]
+    if query("Do you want to manually specify update lengths? (y/n) ", ['y', 'n']) == 'y':
+        try:
+            MinorTime = int(input("Minor Time, seconds (2640): "))
+        except SyntaxError:
+            MinorTime = 2640
+        try:
+            MajorTime = int(input("Major Time, seconds (3540): "))
+        except SyntaxError:
+            MajorTime = 3540
+        SpeedOverride = True
 
 # set output filename
 if "-o" in sys.argv:
@@ -109,22 +125,7 @@ except urllib2.HTTPError:
         write_log("ERR  {} is not a valid nation. Terminating.".format(UAgent))
     sys.exit()
 
-# Update lengths are now set to 44m and 59m, per word of [v]
 
-if query("Do you want to manually specify update lengths? (y/n) ", ['y', 'n']) == 'y':
-    try:
-        MinorTime = int(input("Minor Time, seconds (2640): "))
-    except SyntaxError:
-        MinorTime = 2640
-    try:
-        MajorTime = int(input("Major Time, seconds (3540): "))
-    except SyntaxError:
-        MajorTime = 3540
-    SpeedOverride = True
-else:
-    SpeedOverride = False
-    MinorTime = 2640
-    MajorTime = 3540
 
 if log:
     write_log("INFO Minor length: " + str(MinorTime))
