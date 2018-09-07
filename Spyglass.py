@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-# Spyglass v0.4
+# Spyglass
 # Source code by Derps aka Panzer Vier
 # Modifications made by Khronion (KH)
 
@@ -229,15 +229,15 @@ for EVENT in root.iter('EMBASSIES'):
 
 
 # Grabbing the cumulative number of nations that've updated by the time a region has.
-CumulNationList = []
+# The first entry is zero because time calculations need to reflect the start of region update, not the end
+CumulNationList = [0]
 for a in NumNationList:
     if len(CumulNationList) == 0:
         CumulNationList.extend([int(a)])
     else:
         CumulNationList.extend([int(a) + CumulNationList[-1]])
 
-# Still need to get this to auto-calibrate. Subject to change in the near future, but the times are a rough
-# approximation anyway, so...
+# Calculate speed based on total population
 CumulNations = CumulNationList[-1]
 MinorNatTime = float(MinorTime) / CumulNations
 MajorNatTime = float(MajorTime) / CumulNations
@@ -348,7 +348,7 @@ for a in RegionList:
 #
 # I'm 90% sure this isn't the way to do it, but I couldn't get it working otherwise.
 # Anyways, setting the region name column's width, so that it doesn't cut everything off.
-sheet = wb.get_sheet_by_name('Spyglass Timesheet')
+sheet = wb['Spyglass Timesheet']
 sheet.column_dimensions['A'].width = 45
 sheet['J1'].alignment = Alignment(horizontal="right")
 
