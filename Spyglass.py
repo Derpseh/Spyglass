@@ -69,11 +69,11 @@ else:
     YMD = '%s-%s-%s' % (now.year, now.month, now.day)
     filename = 'SpyglassSheet' + YMD + '.xlsx'
 
-    if query("Include region embassies? (y/n) ", ['y', 'n']) == 'n':
+    if query("Include region embassies? (y/n) ", ['y', 'n', '']) == 'n':
         process_embassies = False
 
     # Update lengths are now set to 44m and 59m, per word of [v]
-    if query("Do you want to manually specify update lengths? (y/n) ", ['y', 'n']) == 'y':
+    if query("Do you want to manually specify update lengths? (y/n) ", ['y', 'n', '']) == 'y':
         try:
             MinorTime = int(input("Minor Time, seconds (2640): "))
         except SyntaxError:
@@ -108,8 +108,8 @@ else:
 
 # Set headers as required by NS TOS
 headers = {
-    'User-Agent': 'Spyglass. Currently in use by Panzer Vier (Authenticating). Devved by Panzer Vier > '
-                  'valkynora@gmail.com'}
+    'User-Agent': 'Spyglass. Currently in use by {} (Authenticating). '
+                  'Source code: https://github.com/khronion/Spyglass'.format(UAgent)}
 
 # Verify specified nation is valid -- terminate if not
 try:
@@ -118,14 +118,12 @@ try:
         headers)
     testhtml = urllib2.urlopen(testReq).read()
     headers = {
-        'User-Agent': 'Spyglass. Currently in use by ' + UAgent + '. Devved by Panzer Vier > valkynora@gmail.com'}
+        'User-Agent': 'Spyglass. Currently in use by ' + UAgent + '. Source code: https://github.com/khronion/Spyglass'}
 except urllib2.HTTPError:
     print "Nation not found. Be sure to input the name of a nation that actually exists."
     if log:
         write_log("ERR  {} is not a valid nation. Terminating.".format(UAgent))
     sys.exit()
-
-
 
 if log:
     write_log("INFO Minor length: " + str(MinorTime))
