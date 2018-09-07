@@ -1,5 +1,9 @@
 #!/usr/bin/env python2
 
+
+# UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED!
+VERSION = "1.4.3"
+
 # Spyglass
 # Source code by Derps aka Panzer Vier
 # Modifications made by Khronion (KH)
@@ -36,7 +40,7 @@ def query(text, options):
 
 # show help message and terminate
 if "-h" in sys.argv or "--help" in sys.argv:
-    print "Spyglass: Generate NationStates region update timesheets.\n"
+    print "Spyglass {}: Generate NationStates region update timesheets.\n".format(VERSION)
     print "Developed by Panzer Vier, with additions by Khronion\n"
     print "usage: {} [-h] [-n NATION] [-o OUTFILE] [-s | -l PATH]\n".format(sys.argv[0])
     print "Optional arguments:\n" \
@@ -60,20 +64,22 @@ SpeedOverride = False
 MinorTime = 2640
 MajorTime = 3540
 
+now = datetime.now()
+YMD = '%s-%s-%s' % (now.year, now.month, now.day)
+
 # set nation name
 if "-n" in sys.argv:
     UAgent = sys.argv[sys.argv.index("-n") + 1]
 else:
+    print "Spyglass {}: Generate NationStates region update timesheets.".format(VERSION)
     UAgent = str(raw_input('Nation Name: '))
-    now = datetime.now()
-    YMD = '%s-%s-%s' % (now.year, now.month, now.day)
     filename = 'SpyglassSheet' + YMD + '.xlsx'
 
-    if query("Include region embassies? (y/n) ", ['y', 'n', '']) == 'n':
+    if query("Include region embassies? (y/n, defaults to y) ", ['y', 'n', '']) == 'n':
         process_embassies = False
 
     # Update lengths are now set to 44m and 59m, per word of [v]
-    if query("Do you want to manually specify update lengths? (y/n) ", ['y', 'n', '']) == 'y':
+    if query("Do you want to manually specify update lengths? (y/n, defaults to n) ", ['y', 'n', '']) == 'y':
         try:
             MinorTime = int(input("Minor Time, seconds (2640): "))
         except SyntaxError:
@@ -88,8 +94,6 @@ else:
 if "-o" in sys.argv:
     filename = sys.argv[sys.argv.index("-o") + 1]
 else:
-    now = datetime.now()
-    YMD = '%s-%s-%s' % (now.year, now.month, now.day)
     filename = 'SpyglassSheet' + YMD + '.xlsx'
 
 # enable debug log
@@ -288,6 +292,8 @@ ws['L5'].value = 'Nations/Sec'
 ws['L6'].value = 'Last Minor'
 ws['L7'].value = 'Secs/Nation'
 ws['L8'].value = 'Nations/Sec'
+ws['L10'].value = 'Spyglass Version'
+ws['L11'].value = 'Date Generated'
 ws['M2'].value = CumulNations
 ws['M3'].value = MajorList[-1] - MajorList[0]
 ws['M4'].value = float(MajorList[-1] - MajorList[0]) / CumulNations
@@ -295,6 +301,8 @@ ws['M5'].value = 1 / (float(MajorList[-1] - MajorList[0]) / CumulNations)
 ws['M6'].value = MinorTime
 ws['M7'].value = MinorNatTime
 ws['M8'].value = 1 / MinorNatTime
+ws['M10'].value = VERSION
+ws['M11'].value = YMD
 
 # There's probably a better way of doing this, but my coding skills are dubious :^)
 # Anyways, actually pasting the information from our various lists into the spreadsheet.
