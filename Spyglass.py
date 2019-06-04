@@ -197,7 +197,7 @@ root = ElementTree.fromstring(regions)
 for EVENT in root.iter('NAME'):
     RegionList += [EVENT.text]
     UrlString = '=HYPERLINK("https://www.nationstates.net/region=' + EVENT.text + '")'
-    # UrlString.replace(' ', '_')
+    UrlString.replace(' ', '_')
     RegionURLList += [UrlString.replace(' ', '_')]
 for EVENT in root.iter('NUMNATIONS'):
     NumNationList += [int(EVENT.text)]
@@ -216,8 +216,11 @@ for EVENT in root.iter('LASTUPDATE'):
 
 # KH: gather WFE info
 for EVENT in root.iter('FACTBOOK'):
+    text = EVENT.text
     try:
-        RegionWFEList += [EVENT.text]
+        if text[0] in ['=', '+', "-", "@"]:
+            text = "'" + text  # IMPORTANT: prevent excel from parsing WFEs as formulas
+        RegionWFEList += [text]
     except TypeError:  # no WFE
         RegionWFEList += [""]
 
