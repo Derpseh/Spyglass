@@ -1,3 +1,5 @@
+**Important**: Old versions of Spyglass have a code injection vulnerability. [Version 1.4.4 patches this vulnerability.](https://github.com/khronion/Spyglass/releases/tag/v1.4.4)
+
 # Spyglass
 
 *Nationstates Sheet-generator for easily finding approximate update times*
