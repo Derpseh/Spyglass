@@ -2,7 +2,7 @@
 
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED!
-VERSION = "1.4.3"
+VERSION = "1.4.4"
 
 # Spyglass
 # Source code by Derps aka Panzer Vier
