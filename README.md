@@ -1,17 +1,19 @@
-**Important**: Old versions of Spyglass have a code injection vulnerability. [Version 1.4.4 patches this vulnerability.](https://github.com/khronion/Spyglass/releases/tag/v1.4.4)
-
 # Spyglass
 
 *Nationstates Sheet-generator for easily finding approximate update times*
 
-[Latest release](https://github.com/khronion/Spyglass/releases)
+[Latest release](https://github.com/Aptenodyte/Spyglass/releases)
 
 ## Running Spyglass
 
-To run Spyglass from source, you will need a working Python 2.x installation with [OpenPyXL](https://openpyxl.readthedocs.io/en/default/). Execute `Spyglass.py` with your Python 2.x interpreter.
+To run Spyglass from source, you will need a working Python 3.6+ installation with Openpyxl, Requests, BeautifulSoup4, and LXML. You can obtain these packages through pip:  
+```
+pip install openpyxl, requests, beautifulsoup4, lxml
+```
+Execute `Spyglass.py` with your Python 3.6+ interpreter.
 
 ```
-$ python2 spyglass.py
+$ python Spyglass.py
 ```
 
 Follow the subsequent prompts to generate a sheet. You must provide a valid nation name in order to use Spyglass.
