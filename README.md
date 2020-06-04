@@ -8,7 +8,7 @@
 
 To run Spyglass from source, you will need a working Python 3.6+ installation with Openpyxl, Requests, BeautifulSoup4, and LXML. You can obtain these packages through pip:  
 ```
-pip install openpyxl, requests, beautifulsoup4, lxml
+pip install openpyxl requests beautifulsoup4 lxml
 ```
 Execute `Spyglass.py` with your Python 3.6+ interpreter.
 
