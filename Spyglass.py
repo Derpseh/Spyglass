@@ -271,7 +271,7 @@ if SpeedOverride:
         MajTime.append(f"{temphours}:{tempmins}:{tempsecs}")
 else:
     for a in MajorList:
-        temptime = a - MajorTime[0]
+        temptime = a - MajorList[0]
         tempsecs = temptime % 60
         tempmins = int(math.floor(temptime / 60) % 60)
         temphours = int(math.floor(temptime / 3600))
