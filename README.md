@@ -13,7 +13,7 @@ pip install openpyxl, requests, beautifulsoup4, lxml
 Execute `Spyglass.py` with your Python 3.6+ interpreter.
 
 ```
-$ python Spyglass.py
+python Spyglass.py
 ```
 
 Follow the subsequent prompts to generate a sheet. You must provide a valid nation name in order to use Spyglass.
