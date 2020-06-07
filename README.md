@@ -18,6 +18,9 @@ python Spyglass.py
 
 Follow the subsequent prompts to generate a sheet. You must provide a valid nation name in order to use Spyglass.
 
+### Recommended execution method
+To run Spyglass via EXE, download the binary from the releases page. You will not need to install any dependencies. It will launch in a GUI mode.
+
 As a reminder, times given by Spyglass are only approximate, since update time varies from update to update due to nation creation/deletion and server-side variance. These times should be used to place triggers which can be used in turn to determine a given region's true update time.
 
 ## Using the Spreadsheet
