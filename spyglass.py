@@ -59,7 +59,7 @@ sg.theme("DarkAmber")
 # Aav: People probably want to know what the script is doing, so we're going to reroute all the print() statements to the GUI
 
 layout = [[sg.Text('Spyglass - Developed by Panzier Vier, additions by Khronion and Zizou. GUI devved by Aav.')],
-          [sg.Text()],
+          [sg.Text('When the window is frozen, the program is processing. Don\'t worry about it.')],
           [sg.Text('Input Useragent'),sg.Input(key='UAGENT')],
           [sg.Text('Embassies'), sg.Checkbox('',change_submits = True, enable_events=True, default='1',key='EMB')],
           [sg.Text('Download New Dump'), sg.Checkbox('',change_submits=True, enable_events=True, default='1', key="DUM")],
