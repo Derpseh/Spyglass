@@ -1,10 +1,13 @@
+#!/usr/bin/env python3
+
+# UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
+VERSION = "1.5"
+
 # Spyglass
 # Source code by Derps aka Panzer Vier
 # Modifications made by Khronion (KH)
 # Ported to Python 3 with additional modifications by Zizou (Ziz)
-# GUI made painfully and with much headsmashing by Aav
 
-import PySimpleGUI as sg
 import requests
 import gzip
 from openpyxl import Workbook
@@ -18,9 +21,6 @@ import sys
 
 logpath = "debug.log"
 
-# UPDATE THIS WHENEVER A NEW RELEASE IS PACKAGED
-# VERY IMPORTANT
-VERSION = "1.5"
 
 # Method for writing a debug log
 def write_log(text):
@@ -41,7 +41,27 @@ def download_dump():
         for chunk in dump_request.iter_content(chunk_size = 16*1024):
             data_dump.write(chunk)
 
-# Spyglass variable definitions
+# Parse arguments, if any...
+
+# Show help message and terminate
+if "-h" in sys.argv or "--help" in sys.argv:
+    print(f"Spyglass {VERSION}: Generate NationStates region update timesheets.\n")
+    print("Developed by Panzer Vier, with additions by Khronion and Zizou\n")
+    print(f"usage: {sys.argv[0]} [-h] [-n NATION] [-o OUTFILE] [-s | -l PATH]\n")
+    print("""Optional arguments:
+     -h           Show this help message and exit.
+     -n NATION    Specify Nation to identify user by. In order to comply with
+                  NationStates API rules, this must be the user's nation. Use
+                  underscores instead of spaces.
+     -o OUTFILE   File to output the generated timesheet in XLSX format to.
+     -s           Suppress creating a debug log file. Log files are written to
+                  the current working directory.
+     -l PATH      Write debug log to specified path.
+     -m           Generate a minimized sheet without WFEs and embassies
+    """)
+    print("""If run without arguments, Spyglass runs in interactive mode and outputs to its
+working directory.""")
+    sys.exit()
 
 process_embassies = True
 log = True
@@ -53,37 +73,49 @@ MajorTime = 9000
 now = datetime.now()
 YMD = f"{now.year}-{now.month}-{now.day}"
 
-# Aav: Initialize GUI
-sg.theme("DarkAmber")
+# Set nation name
+if "-n" in sys.argv:
+    UAgent = sys.argv[sys.argv.index("-n") + 1]
+else:
+    print(f"Spyglass {VERSION}: Generate NationStates region update timesheets.")
+    UAgent = input("Nation Name: ")
+    filename = f"SpyglassSheet{YMD}.xlsx"
 
-# Aav: People probably want to know what the script is doing, so we're going to reroute all the print() statements to the GUI
+    if query("Include region embassies? (y/n, defaults to y) ", ["y", "n", ""]) == "n":
+        process_embassies = False
 
-layout = [[sg.Text('Spyglass - Developed by Panzier Vier, additions by Khronion and Zizou. GUI devved by Aav.')],
-          [sg.Text('When the window is frozen, the program is processing. Don\'t worry about it.')],
-          [sg.Text('Input Useragent'),sg.Input(key='UAGENT')],
-          [sg.Text('Embassies'), sg.Checkbox('',change_submits = True, enable_events=True, default='1',key='EMB')],
-          [sg.Text('Download New Dump'), sg.Checkbox('',change_submits=True, enable_events=True, default='1', key="DUM")],
-          [sg.Button("Generate Sheet")]]
+    # Ziz: Update lengths are now 1.5hrs and 2.5hrs for minor and major respectively
+    if query("Do you want to manually specify update lengths? (y/n, defaults to n) ", ["y", "n", ""]) == "y":
+        try:
+            MinorTime = input("Minor Time, seconds (5400): ")
+        except SyntaxError:
+            MinorTime = 5400
+        try:
+            MajorTime = input("Major Time, seconds (9000): ")
+        except SyntaxError:
+            MajorTime = 9000
+        SpeedOverride = True
 
-window = sg.Window("Spyglass-GUI", layout)
-event, values = window.read()
+# Set output filename
+if "-o" in sys.argv:
+    filename = sys.argv[sys.argv.index("-o") + 1]
+else:
+    filename = f"SpyglassSheet{YMD}.xlsx"
 
-# Aav: Set the useragent to equal our variable we just pulled from the GUI
-UAgent = values["UAGENT"]
+# Enable debug log
+if "-s" in sys.argv:
+    log = False
 
-# Aav: Set the WFE check to whatever the tickbox said
-if values["EMB"] == 0:
+if "-m" in sys.argv:
     process_embassies = False
-elif values["EMB"] == 1:
-    process_embassies = True
+else:
+    if "-l" in sys.argv:
+        logpath = sys.argv[sys.argv.index("-l") + 1]
+    starting_args = " ".join(sys.argv[1:])
+    write_log(f"INFO Spyglass started with arguments: {starting_args}")
+    write_log(f"INFO User Nation: {UAgent}")
+    write_log(f"INFO Out File: {filename}")
 
-# Aav: Set the dump check to whatever the tickbox said
-if values["DUM"] == 0:
-    new_dump = False
-elif values["DUM"] == 1:
-    new_dump = True
-
-filename = f"SpyglassSheet{YMD}.xlsx"
 # Set headers as required by NS TOS
 headers = {"User-Agent": f"Spyglass-Fork/{VERSION} (developer:aptenodytezizou@gmail.com; user:{UAgent}; Authenticating)"}
 
@@ -119,7 +151,7 @@ html2 = req2.text
 # Ziz: Otherwise just download the latest data dump if nothing is detected
 dump_path = Path("./regions.xml.gz")
 if dump_path.exists() and dump_path.is_file():
-    if new_dump == True:
+    if query("Existing data dump found. Do you want to re-download the latest dump? (y/n, defaults to y) ", ["y", "n", ""]) == "y":
         if log:
             write_log("INFO Found data dump, but re-downloading the latest..")
         print("Pulling data dump...")
@@ -343,5 +375,5 @@ wb.save(filename)
 if log:
     write_log(f"INFO Successfully saved to {filename}")
     write_log(f"INFO Spyglass run complete. Exiting...")
-window.close()
+
 sys.exit()
