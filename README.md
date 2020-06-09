@@ -6,9 +6,9 @@
 
 ## Running Spyglass
 
-To run Spyglass from source, you will need a working Python 3.6+ installation with Openpyxl, Requests, BeautifulSoup4, and LXML. You can obtain these packages through pip:  
+To run Spyglass from source, you will need a working Python 3.6+ installation with Openpyxl, Requests, BeautifulSoup4, LXML, and PySimpleGUI. You can obtain these packages through pip:  
 ```
-pip install openpyxl requests beautifulsoup4 lxml
+pip install openpyxl requests beautifulsoup4 lxml pysimplegui
 ```
 Execute `Spyglass.py` with your Python 3.6+ interpreter.
 
@@ -16,7 +16,7 @@ Execute `Spyglass.py` with your Python 3.6+ interpreter.
 python Spyglass.py
 ```
 
-Follow the subsequent prompts to generate a sheet. You must provide a valid nation name in order to use Spyglass.
+Enter the relevant information to generate a sheet. You must provide a valid nation name in order to use Spyglass.
 
 As a reminder, times given by Spyglass are only approximate, since update time varies from update to update due to nation creation/deletion and server-side variance. These times should be used to place triggers which can be used in turn to determine a given region's true update time.
 
@@ -38,6 +38,7 @@ Additionally, regions are color-coded in column H based on their endorsement cou
 Spyglass now also lists a region's embassies and the first 140 characters from their WFE in columns I and J. These columns can be filtered to quickly identify regions that are not yet or currently tagged.
 
 ## Supported Terminal Arguments
+***As of release 1.6, Spyglass no longer accepts terminal arguments, as it has been reworked to use a GUI. If you still need terminal arguments, use release [1.5](https://github.com/Aptenodyte/Spyglass/releases/tag/v.1.5)***
 
 If you need Spyglass to run unattended (e.g. through a scheduled task or Cron job), you can use the following arguments
 to control its behavior.
