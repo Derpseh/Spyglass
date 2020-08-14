@@ -9,7 +9,7 @@ import requests
 import gzip
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Alignment
-from openpyxl.styles.colors import RED, GREEN, YELLOW
+from openpyxl.styles.colors import COLOR_INDEX
 from bs4 import BeautifulSoup
 import math
 from datetime import datetime
@@ -61,6 +61,8 @@ sg.theme("DarkAmber")
 layout = [[sg.Text('Spyglass - Developed by Panzier Vier, additions by Khronion and Zizou. GUI devved by Aav.')],
           [sg.Text('When the window is frozen, the program is processing. Don\'t worry about it.')],
           [sg.Text('Input Useragent'),sg.Input(key='UAGENT')],
+          [sg.Text('Major Update Length'),sg.Input(key='MAJUP')],
+          [sg.Text('Minor Update Length'),sg.Input(key='MINUP')],
           [sg.Text('Embassies'), sg.Checkbox('',change_submits = True, enable_events=True, default='1',key='EMB')],
           [sg.Text('Download New Dump'), sg.Checkbox('',change_submits=True, enable_events=True, default='1', key="DUM")],
           [sg.Button('Generate Sheet'), sg.Button('Exit')]]
@@ -85,6 +87,10 @@ while True:
             new_dump = False
         elif values["DUM"] == 1:
             new_dump = True
+
+        # Aav: Get update times into variables so that they can be used
+        MajorTime = int(values['MAJUP'])
+        MinorTime = int(values['MINUP'])
 
         filename = f"SpyglassSheet{YMD}.xlsx"
         # Set headers as required by NS TOS
@@ -140,9 +146,9 @@ while True:
             if log:
                 write_log("INFO Download complete!")
 
-        redFill = PatternFill(start_color = RED, end_color = RED, fill_type = "solid")
-        greenFill = PatternFill(start_color = GREEN, end_color = GREEN, fill_type = "solid")
-        yellowFill = PatternFill(start_color = YELLOW, end_color = YELLOW, fill_type = "solid")
+        redFill = PatternFill(start_color=COLOR_INDEX[2], end_color=COLOR_INDEX[2], fill_type="solid")
+        greenFill = PatternFill(start_color=COLOR_INDEX[3], end_color=COLOR_INDEX[3], fill_type="solid")
+        yellowFill = PatternFill(start_color=COLOR_INDEX[5], end_color=COLOR_INDEX[5], fill_type="solid")
 
         # Un-gzipping
         # Ziz: Now we can just decompress the dump and hand it to the parser without writing to disk
