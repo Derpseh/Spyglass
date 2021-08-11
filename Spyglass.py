@@ -2,11 +2,12 @@
 
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED!
-VERSION = "1.4.4"
+VERSION = "1.4.4-RO" # Added RO to version - Merni
 
 # Spyglass
 # Source code by Derps aka Panzer Vier
 # Modifications made by Khronion (KH)
+# Regional Officer column (optional) added by Merni.
 
 import urllib
 import gzip
@@ -52,12 +53,14 @@ if "-h" in sys.argv or "--help" in sys.argv:
           " -s           Suppress creating a debug log file. Log files are written to\n" \
           "              the current working directory.\n" \
           " -l PATH      Write debug log to specified path.\n" \
-          " -m           Generate a minimized sheet without WFEs and embassies\n"
+          " -f           Don't add regional officers" \
+          " -m           Generate a minimized sheet without WFEs and embassies\n" # -f added by Merni
     print "If run without arguments, Spyglass runs in interactive mode and outputs to its\n" \
           "working directory."
     sys.exit()
 
 process_embassies = True
+process_officers = True # Merni
 log = True
 
 SpeedOverride = False
@@ -77,6 +80,9 @@ else:
 
     if query("Include region embassies? (y/n, defaults to y) ", ['y', 'n', '']) == 'n':
         process_embassies = False
+    # officers added by Merni
+    if query("Include officers? (y/n, default y) ", ['y', 'n', '']) == 'n':
+        process_officers = False
 
     # Update lengths are now set to 44m and 59m, per word of [v]
     if query("Do you want to manually specify update lengths? (y/n, defaults to n) ", ['y', 'n', '']) == 'y':
@@ -102,6 +108,9 @@ if "-s" in sys.argv:
 
 if "-m" in sys.argv:
     process_embassies = False
+    
+if "-f" in sys.argv:
+    process_officers = False # Added by Merni
 
 else:
     if "-l" in sys.argv:
@@ -232,6 +241,18 @@ for EVENT in root.iter('EMBASSIES'):
             embassies += [embassy.text]
     RegionEmbassyList += [','.join(embassies)]
 
+# Merni: Officers
+OfficerList = []
+for region in root.iter('OFFICERS'):
+    off_string = " "
+    if process_officers:
+        for officer in region.iter('OFFICER'):
+            offnation = officer.find('NATION').text
+            offtitle  = officer.find('OFFICE').text
+            off_string += (offnation + ' : ' + offtitle + ', ')
+    OfficerList += [off_string]
+
+
 
 # Grabbing the cumulative number of nations that've updated by the time a region has.
 # The first entry is zero because time calculations need to reflect the start of region update, not the end
@@ -285,7 +306,7 @@ ws['H1'].value = 'Del. Endos'
 if process_embassies:
     ws['I1'].value = 'Embassies'
 ws['J1'].value = 'WFE'
-
+ws['K1'].value = 'Officer : Office' # added by Merni
 ws['L1'].value = 'World '
 ws['M1'].value = 'Data'
 ws['L2'].value = 'Nations'
@@ -345,7 +366,7 @@ for a in RegionList:
     ws.cell(row=counter + 2, column=8).value = DelVoteList[counter] - 1
     ws.cell(row=counter + 2, column=9).value = RegionEmbassyList[counter]
     ws.cell(row=counter + 2, column=10).value = RegionWFEList[counter]
-    ws.cell(row=counter + 2, column=11).value = " "
+    ws.cell(row=counter + 2, column=11).value = OfficerList[counter] # added by Merni
 
     # Highlight delegate-less regions. They're good for tagging, or whatever~
     if DelVoteList[counter] == 0:
