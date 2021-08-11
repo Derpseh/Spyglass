@@ -1,7 +1,8 @@
 This version adds a last column which contains a list of regional officers and their titles, sometimes useful in detagging.
 The interactive input asks you if you want this.
 Provide command line option -f to disable the officer saving.
-No other changes were made from Khronion's code. - Merni, August 2021.
+The readme was modified to add this section. [Latest release](https://github.com/merni-ns/Spyglass/releases)
+No other changes were made from Khronion's code.- Merni, August 2021.
 
 **Important**: Old versions of Spyglass have a code injection vulnerability. [Version 1.4.4 patches this vulnerability.](https://github.com/khronion/Spyglass/releases/tag/v1.4.4)
 
@@ -10,6 +11,7 @@ No other changes were made from Khronion's code. - Merni, August 2021.
 *Nationstates Sheet-generator for easily finding approximate update times*
 
 [Latest release](https://github.com/khronion/Spyglass/releases)
+
 
 ## Running Spyglass
 
