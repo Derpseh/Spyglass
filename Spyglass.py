@@ -2,12 +2,12 @@
 
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED!
-VERSION = "1.4.4-RO" # Added RO to version - Merni
+VERSION = "1.4.4-RO2" # Added RO to version - Merni
 
 # Spyglass
 # Source code by Derps aka Panzer Vier
 # Modifications made by Khronion (KH)
-# Regional Officer column (optional) added by Merni.
+# Regional Officer column (optional) and Delegate Powers column (optional) added by Merni.
 
 import urllib
 import gzip
@@ -53,7 +53,7 @@ if "-h" in sys.argv or "--help" in sys.argv:
           " -s           Suppress creating a debug log file. Log files are written to\n" \
           "              the current working directory.\n" \
           " -l PATH      Write debug log to specified path.\n" \
-          " -f           Don't add regional officers" \
+          " -f           Don't add regional officers and delegate powers" \
           " -m           Generate a minimized sheet without WFEs and embassies\n" # -f added by Merni
     print "If run without arguments, Spyglass runs in interactive mode and outputs to its\n" \
           "working directory."
@@ -61,6 +61,7 @@ if "-h" in sys.argv or "--help" in sys.argv:
 
 process_embassies = True
 process_officers = True # Merni
+process_delauth = True # Merni
 log = True
 
 SpeedOverride = False
@@ -81,8 +82,11 @@ else:
     if query("Include region embassies? (y/n, defaults to y) ", ['y', 'n', '']) == 'n':
         process_embassies = False
     # officers added by Merni
-    if query("Include officers? (y/n, default y) ", ['y', 'n', '']) == 'n':
+    if query("Include officers? (y/n, defaults to y) ", ['y', 'n', '']) == 'n':
         process_officers = False
+    
+    if query("Include delegate powers? (y/n, defaults to y) ", ['y', 'n', '']) == 'n':
+        process_delauth = False
 
     # Update lengths are now set to 44m and 59m, per word of [v]
     if query("Do you want to manually specify update lengths? (y/n, defaults to n) ", ['y', 'n', '']) == 'y':
@@ -109,8 +113,9 @@ if "-s" in sys.argv:
 if "-m" in sys.argv:
     process_embassies = False
     
-if "-f" in sys.argv:
-    process_officers = False # Added by Merni
+if "-f" in sys.argv: # Added by Merni
+    process_officers = False
+    process_delauth = False
 
 else:
     if "-l" in sys.argv:
@@ -252,7 +257,13 @@ for region in root.iter('OFFICERS'):
             off_string += (offnation + ' : ' + offtitle + ', ')
     OfficerList += [off_string]
 
-
+# Merni: Delegate powers
+PowerList = []
+for region in root.iter("DELEGATEAUTH"):
+    auth_string = " "
+    if process_delauth:
+        auth_string = region.text
+    PowerList += [auth_string]
 
 # Grabbing the cumulative number of nations that've updated by the time a region has.
 # The first entry is zero because time calculations need to reflect the start of region update, not the end
@@ -307,26 +318,45 @@ if process_embassies:
     ws['I1'].value = 'Embassies'
 ws['J1'].value = 'WFE'
 ws['K1'].value = 'Officer : Office' # added by Merni
-ws['L1'].value = 'World '
-ws['M1'].value = 'Data'
-ws['L2'].value = 'Nations'
-ws['L3'].value = 'Last Major'
-ws['L4'].value = 'Secs/Nation'
-ws['L5'].value = 'Nations/Sec'
-ws['L6'].value = 'Last Minor'
-ws['L7'].value = 'Secs/Nation'
-ws['L8'].value = 'Nations/Sec'
-ws['L10'].value = 'Spyglass Version'
-ws['L11'].value = 'Date Generated'
-ws['M2'].value = CumulNations
-ws['M3'].value = MajorList[-1] - MajorList[0]
-ws['M4'].value = float(MajorList[-1] - MajorList[0]) / CumulNations
-ws['M5'].value = 1 / (float(MajorList[-1] - MajorList[0]) / CumulNations)
-ws['M6'].value = MinorTime
-ws['M7'].value = MinorNatTime
-ws['M8'].value = 1 / MinorNatTime
-ws['M10'].value = VERSION
-ws['M11'].value = YMD
+ws['L1'].value = 'Del. Power' # added by Merni
+ws['M1'].value = 'World '
+ws['N1'].value = 'Data'
+ws['M2'].value = 'Nations'
+ws['M3'].value = 'Last Major'
+ws['M4'].value = 'Secs/Nation'
+ws['M5'].value = 'Nations/Sec'
+ws['M6'].value = 'Last Minor'
+ws['M7'].value = 'Secs/Nation'
+ws['M8'].value = 'Nations/Sec'
+ws['M10'].value = 'Spyglass Version'
+ws['M11'].value = 'Date Generated'
+ws['N2'].value = CumulNations
+ws['N3'].value = MajorList[-1] - MajorList[0]
+ws['N4'].value = float(MajorList[-1] - MajorList[0]) / CumulNations
+ws['N5'].value = 1 / (float(MajorList[-1] - MajorList[0]) / CumulNations)
+ws['N6'].value = MinorTime
+ws['N7'].value = MinorNatTime
+ws['N8'].value = 1 / MinorNatTime
+ws['N9'].value = VERSION
+ws['N11'].value = YMD
+
+# Added by Merni -- key to delegate authority codes
+ws['M13'].value = "Letter"
+ws['N13'].value = "Meaning"
+ws['M14'].value = "X"
+ws['N14'].value = "Executive"
+ws['M15'].value = "W"
+ws['N15'].value = "World Assembly"
+ws['M16'].value = "A"
+ws['N16'].value = "Appearance"
+ws['M17'].value = "B"
+ws['N17'].value = "Border control"
+ws['M18'].value = "C"
+ws['N18'].value = "Communications"
+ws['M19'].value = "E"
+ws['N19'].value = "Embassies"
+ws['M20'].value = "P"
+ws['N20'].value = "Polls"
 
 # There's probably a better way of doing this, but my coding skills are dubious :^)
 # Anyways, actually pasting the information from our various lists into the spreadsheet.
@@ -367,6 +397,7 @@ for a in RegionList:
     ws.cell(row=counter + 2, column=9).value = RegionEmbassyList[counter]
     ws.cell(row=counter + 2, column=10).value = RegionWFEList[counter]
     ws.cell(row=counter + 2, column=11).value = OfficerList[counter] # added by Merni
+    ws.cell(row=counter + 2, column=12).value = PowerList[counter] # added by Merni
 
     # Highlight delegate-less regions. They're good for tagging, or whatever~
     if DelVoteList[counter] == 0:
