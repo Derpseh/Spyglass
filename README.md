@@ -1,3 +1,5 @@
+The RO2 version also adds a column for the powers that the region's delegate has. Earlier you could only see whether the delegate was executive or non-executive. - Merni, Sept. 2021.
+
 This version adds a last column which contains a list of regional officers and their titles, sometimes useful in detagging.
 The interactive input asks you if you want this.
 Provide command line option -f to disable the officer saving.
