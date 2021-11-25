@@ -2,7 +2,7 @@
 
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED!
-VERSION = "1.4.4-RO2" # Added RO to version - Merni
+VERSION = "1.4.4-RO3" # Added RO to version - Merni
 
 # Spyglass
 # Source code by Derps aka Panzer Vier
@@ -254,6 +254,7 @@ for region in root.iter('OFFICERS'):
         for officer in region.iter('OFFICER'):
             offnation = officer.find('NATION').text
             offtitle  = officer.find('OFFICE').text
+            if offtitle == None: offtitle = '' # Fix TypeError on blank title
             off_string += (offnation + ' : ' + offtitle + ', ')
     OfficerList += [off_string]
 
