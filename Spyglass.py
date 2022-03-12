@@ -20,7 +20,7 @@ logpath = "debug.log"
 
 # UPDATE THIS WHENEVER A NEW RELEASE IS PACKAGED
 # VERY IMPORTANT
-VERSION = "1.5"
+VERSION = "1.6.1"
 
 # Method for writing a debug log
 def write_log(text):
@@ -47,8 +47,8 @@ process_embassies = True
 log = True
 
 SpeedOverride = False
-MinorTime = 5400
-MajorTime = 9000
+MinorTime = 3250
+MajorTime = 5250
 
 now = datetime.now()
 YMD = f"{now.year}-{now.month}-{now.day}"
@@ -58,13 +58,13 @@ sg.theme("DarkAmber")
 
 # Aav: People probably want to know what the script is doing, so we're going to reroute all the print() statements to the GUI
 
-layout = [[sg.Text('Spyglass - Developed by Panzier Vier, additions by Khronion and Zizou. GUI devved by Aav.')],
+layout = [[sg.Text('Spyglass - Developed by Devi, additions by Khronion and Zizou. GUI devved by Aav.')],
           [sg.Text('When the window is frozen, the program is processing. Don\'t worry about it.')],
-          [sg.Text('Input Useragent'),sg.Input(key='UAGENT')],
-          [sg.Text('Major Update Length'),sg.Input(key='MAJUP')],
-          [sg.Text('Minor Update Length'),sg.Input(key='MINUP')],
-          [sg.Text('Embassies'), sg.Checkbox('',change_submits = True, enable_events=True, default='1',key='EMB')],
-          [sg.Text('Download New Dump'), sg.Checkbox('',change_submits=True, enable_events=True, default='1', key="DUM")],
+          [sg.Text('Input Useragent'), sg.Input(key='UAGENT')],
+          [sg.Text('Embassies'), sg.Checkbox('', change_submits = True, enable_events=True, default='1',key='EMB')],
+          [sg.Text('Download New Dump'), sg.Checkbox('', change_submits=True, enable_events=True, default='1', key="DUM")],
+          [sg.Text('Manually Set Min/Maj Time'), sg.Checkbox('', change_submits=True, enable_events=True, default='0', key='MAN')],
+          [sg.Text('Minor Time'), sg.Input(default_text = "3250", size = 5, key='MIN'), sg.Text('Major Time'), sg.Input(default_text = "5250", size = 5, key='MAJ')],
           [sg.Button('Generate Sheet'), sg.Button('Exit')]]
 
 window = sg.Window("Spyglass-GUI", layout)
@@ -87,10 +87,21 @@ while True:
             new_dump = False
         elif values["DUM"] == 1:
             new_dump = True
-
-        # Aav: Get update times into variables so that they can be used
-        MajorTime = int(values['MAJUP'])
-        MinorTime = int(values['MINUP'])
+        	
+        # Devi: Set manual update length depending on tickbox
+        if values["MAN"] == 0:
+            SpeedOverride = False
+        elif values["MAN"] == 1:
+            SpeedOverride = True
+            try:
+                MinorTime = int(values["MIN"])
+                MajorTime = int(values["MAJ"])
+            except:
+                print("Invalid values for Minor/Major times. Be sure to input an integer value.")
+                if log:
+                    write_log(f"Invalid Minor/Major values. Terminating.")
+                sys.exit()
+            
 
         filename = f"SpyglassSheet{YMD}.xlsx"
         # Set headers as required by NS TOS
@@ -146,9 +157,10 @@ while True:
             if log:
                 write_log("INFO Download complete!")
 
-        redFill = PatternFill(start_color=COLOR_INDEX[2], end_color=COLOR_INDEX[2], fill_type="solid")
-        greenFill = PatternFill(start_color=COLOR_INDEX[3], end_color=COLOR_INDEX[3], fill_type="solid")
-        yellowFill = PatternFill(start_color=COLOR_INDEX[5], end_color=COLOR_INDEX[5], fill_type="solid")
+        redFill = PatternFill(start_color = COLOR_INDEX[2], end_color = COLOR_INDEX[2], fill_type = "solid")
+        greenFill = PatternFill(start_color = COLOR_INDEX[3], end_color = COLOR_INDEX[3], fill_type = "solid")
+        yellowFill = PatternFill(start_color = COLOR_INDEX[5], end_color = COLOR_INDEX[5], fill_type = "solid")
+
 
         # Un-gzipping
         # Ziz: Now we can just decompress the dump and hand it to the parser without writing to disk
