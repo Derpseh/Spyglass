@@ -166,7 +166,7 @@ try:
     )
     testreq.raise_for_status()
     headers = {
-        "User-Agent": f"Spyglass-Fork/{VERSION} (github: https://github.com/Derpseh/Spyglass ; user:{UAgent})"
+        "User-Agent": f"Spyglass/{VERSION} (github: https://github.com/Derpseh/Spyglass ; user:{UAgent})"
     }
 except HTTPError:
     print(
