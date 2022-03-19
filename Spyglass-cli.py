@@ -126,11 +126,11 @@ else:
         try:
             MinorTime = int(input("Minor Time, seconds (3550): "))
         except SyntaxError:
-            MinorTime = 5400
+            MinorTime = 3550
         try:
             MajorTime = int(input("Major Time, seconds (5350): "))
         except SyntaxError:
-            MajorTime = 9000
+            MajorTime = 5350
         SpeedOverride = True
 
 # Set output filename
@@ -155,7 +155,7 @@ else:
 
 # Set headers as required by NS TOS
 headers = {
-    "User-Agent": f"Spyglass/{VERSION} (developer:aptenodytezizou@gmail.com; user:{UAgent}; Authenticating)"
+    "User-Agent": f"Spyglass/{VERSION} (github: https://github.com/Derpseh/Spyglass ; user:{UAgent}; Authenticating)"
 }
 
 # Verify specified nation is valid -- terminate if not
@@ -166,7 +166,7 @@ try:
     )
     testreq.raise_for_status()
     headers = {
-        "User-Agent": f"Spyglass-Fork/{VERSION} (developer:aptenodytezizou@gmail.com; user:{UAgent})"
+        "User-Agent": f"Spyglass-Fork/{VERSION} (github: https://github.com/Derpseh/Spyglass ; user:{UAgent})"
     }
 except HTTPError:
     print(
