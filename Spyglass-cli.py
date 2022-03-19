@@ -12,10 +12,10 @@ from typing import List
 from xml.etree import ElementTree
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
-VERSION = "1.6-cli"
+VERSION = "2.0"
 
 # Spyglass
-# Source code by Derps aka Panzer Vier
+# Source code by Devi aka Panzer Vier
 # Modifications made by Khronion (KH)
 # Ported to Python 3 with additional modifications by Zizou (Ziz)
 # Yay more modifications (Aav)
