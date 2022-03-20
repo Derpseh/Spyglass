@@ -125,11 +125,11 @@ else:
     ):
         try:
             MinorTime = int(input("Minor Time, seconds (3550): "))
-        except SyntaxError:
+        except ValueError:
             MinorTime = 3550
         try:
             MajorTime = int(input("Major Time, seconds (5350): "))
-        except SyntaxError:
+        except ValueError:
             MajorTime = 5350
         SpeedOverride = True
 
@@ -343,7 +343,10 @@ ws["B1"].value = "Region Link"
 ws["C1"].value = "# Nations"
 ws["D1"].value = "Tot. Nations"
 ws["E1"].value = "Minor Upd. (est)"
-ws["F1"].value = "Major Upd. (true)"
+if SpeedOverride is True:
+    ws["F1"].value = "Major Upd. (est)"
+else:
+    ws["F1"].value = "Major Upd. (true)"
 ws["G1"].value = "Del. Votes"
 ws["H1"].value = "Del. Endos"
 if process_embassies:
