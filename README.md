@@ -46,9 +46,6 @@ If run without arguments, Spyglass runs in interactive mode and outputs to its
 working directory.
 ```
 
-As of 2.0, a user must still manually confirm if they wish to re-use an existing `regions.xml.gz` file with the interactive prompt even if they are using runtime flags.
-
-
 ## Licensing
 Spyglass version 2.0 and onward are licensed under the terms of the [GNU General Public License version 3.0](https://choosealicense.com/licenses/gpl-3.0/).
 
