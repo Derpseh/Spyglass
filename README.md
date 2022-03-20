@@ -16,29 +16,6 @@ Spyglass currently runs in a command prompt window, but a graphical user interfa
 
 *Disclaimer: Although Spyglass maintainers make every effort to comply with NS API rules, players are ultimately responsible for the behavior of any scripts, tools, or other programs that they use. Players are encouraged to report any issues or unexpected behavior in this forum thread, or by filing an issue on GitHub.*
 
-### Runtime Flags
-Advanced users can use the following arguments to control Spyglass.
-
-- `-n NATION` Specify Nation to identify user by. In order to comply with NationStates API rules, this must be the user's nation. Use underscores instead of spaces.
-- `-o OUTFILE` Specify path to write the generated timesheet in XLSX format to.
-- `-s` Suppress creating a debug log file. Log files are written to the current working directory.
-- `-l PATH` Write debug log to specified path.
-- `-m` Suppress the generation of embassies. This makes it easier to search a sheet for a specific nation by name.
-
-### Interpreting a Spyglass Sheet
-
-To help users identify regions of interest in the R/D metagame, regions in Spyglass sheets are color-coded and marked in columns A and B based on if they have a founder, if they have a World Assembly delegate, and if the delegate has executive powers. These markers can be used with Excel's built-in filter function to quickly identify regions of interest.
-
--   GREEN — Region is founderless and passwordless
--   YELLOW — Region has an executive WA delegate and is passwordless
--   RED — Region has non-executive WA delegate and is passwordless
--   `~` — Region can be tagged
--   `*` — Region has non-executive WA delegate
-
-Additionally, regions with zero WAD endorsements are color-coded red in column H, which shows the region's endorsement count.
-
-Spyglass also lists a region's embassies and the first 140 characters from their WFE in columns I and J. These columns can be used to identify regions that have been tagged by military gameplayers.
-
 ## Licensing
 Spyglass version 2.0 and onward are licensed under the terms of the [GNU General Public License version 3.0](https://choosealicense.com/licenses/gpl-3.0/).
 
