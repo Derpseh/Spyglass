@@ -16,32 +16,19 @@ Once packages are installed, Spyglass can be executed from the terminal directly
 $ python Spyglass-cli.py
 ```
 
-## Runtime Flags
+## Building Spyglass
 
-Some runtime flags are available for advanced users.
+OS-specific builds of Spyglass are generated using [pyInstaller](https://pyinstaller.readthedocs.io/en/stable/).
+
+### macOS (Intel)
+
+Install pyInstaller and UPX, then run:
 
 ```commandline
-$ python Spyglass-cli.py -h
-
-Spyglass 2.0: Generate NationStates region update timesheets.
-
-Developed by Panzer Vier, with additions by Khronion, Zizou, and Aav
-
-usage: .\Spyglass-cli.py [-h] [-n NATION] [-o OUTFILE] [-s | -l PATH]
-
-Optional arguments:
--h           Show this help message and exit.
--n NATION    Specify Nation to identify user by. In order to comply with
-NationStates API rules, this must be the user's nation. Use
-underscores instead of spaces.
--o OUTFILE   File to output the generated timesheet in XLSX format to.
--s           Suppress creating a debug log file. Log files are written to
-the current working directory.
--l PATH      Write debug log to specified path.
--m           Generate a minimized sheet without WFEs and embassies
-
-If run without arguments, Spyglass runs in interactive mode and outputs to its
-working directory.
+$ pyinstaller --clean Spyglass-cli.py -F -n Spyglass -c -i assets/Spyglass.icns
 ```
 
-As of 2.0, a user must still manually confirm if they wish to re-use an existing `regions.xml.gz` file with the interactive prompt even if they are using runtime flags.
+### Windows
+```commandline
+$ pyinstaller --clean Spyglass-cli.py -F -n Spyglass.exe -c -i Spyglass.ico
+```
