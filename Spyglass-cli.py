@@ -95,6 +95,7 @@ working directory."""
     )
     raise SystemExit(1)
 
+interactive = True
 process_embassies = True
 log = True
 
@@ -106,6 +107,7 @@ YMD = f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}"
 
 # Set nation name
 if "-n" in argv:
+    interactive = False
     UAgent = argv[argv.index("-n") + 1]
 else:
     print(f"Spyglass {VERSION}: Generate NationStates region update timesheets.")
@@ -186,24 +188,30 @@ write_log("INFO Searching for data dump...")
 # Ziz: If a data dump is detected in the current directory, ask if user wants to re-download latest dump
 # Ziz: Otherwise just download the latest data dump if nothing is detected
 dump_path = Path("./regions.xml.gz")
-if dump_path.exists() and dump_path.is_file():
-    if (
-            query(
-                "Existing data dump found. Do you want to re-download the latest dump? (y/n, defaults to y) ",
-                ["y", "n", ""],
-            )
-            == "y"
-    ):
-        write_log("INFO Found data dump, but re-downloading the latest..")
-        print("Pulling data dump...")
+if interactive:
+    if dump_path.exists() and dump_path.is_file():
+        if (
+                query(
+                    "Existing data dump found. Do you want to re-download the latest dump? (y/n, defaults to y) ",
+                    ["y", "n", ""],
+                )
+                == "y"
+        ):
+            write_log("INFO Found data dump, but re-downloading the latest..")
+            print("Pulling data dump...")
+            download_dump()
+            write_log("INFO Download complete!")
+        else:
+            write_log("INFO Using data dump already present...")
+            print("Using current dump...")
+    else:
+        write_log("INFO No existing data dump found, downloading latest...")
+        print("No existing data dump found. Pulling data dump...")
         download_dump()
         write_log("INFO Download complete!")
-    else:
-        write_log("INFO Using data dump already present...")
-        print("Using current dump...")
 else:
-    write_log("INFO No existing data dump found, downloading latest...")
-    print("No existing data dump found. Pulling data dump...")
+    write_log("INFO running in non-interactive mode, downloading data dump...")
+    print("Pulling data dump...")
     download_dump()
     write_log("INFO Download complete!")
 
