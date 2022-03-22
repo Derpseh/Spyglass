@@ -19,6 +19,7 @@ VERSION = "2.0"
 # Modifications made by Khronion (KH)
 # Ported to Python 3 with additional modifications by Zizou (Ziz)
 # Yay more modifications (Aav)
+# RO column added by Merni
 
 log_path = "debug.log"
 
@@ -86,7 +87,7 @@ if "-h" in argv or "--help" in argv:
      -s           Suppress creating a debug log file. Log files are written to
                   the current working directory.
      -l PATH      Write debug log to specified path.
-     -m           Generate a minimized sheet without WFEs and embassies
+     -m           Generate a minimized sheet without WFEs embassies
     """
     )
     print(
@@ -97,6 +98,7 @@ working directory."""
 
 interactive = True
 process_embassies = True
+process_officers = True
 log = True
 
 SpeedOverride = False
@@ -116,6 +118,10 @@ else:
 
     if query("Include region embassies? (y/n, defaults to y) ", ["y", "n", ""]) == "n":
         process_embassies = False
+
+    # Merni: Process regional officers
+    if query("Include regional officers? (y/n, defaults to y) ", ["y", "n", ""]) == "n":
+        process_officers = False
 
     # Ziz: Update lengths are now 1.5hrs and 2.5hrs for minor and major respectively
     if (
@@ -147,6 +153,8 @@ if "-s" in argv:
 
 if "-m" in argv:
     process_embassies = False
+    process_officers = False # added by Merni
+
 else:
     if "-l" in argv:
         log_path = argv[argv.index("-l") + 1]
@@ -238,6 +246,7 @@ NumNationList = list()
 DelVoteList = list()
 ExecList = list()
 MajorList = list()
+OfficerList = list()
 
 # Sanitize our founderless regions list a wee bit, 'cause at the moment, it's xml, and xml is gross.
 print("Processing data...")
@@ -292,6 +301,17 @@ for wfe in [d.find("FACTBOOK") for d in region_list]:
         RegionWFEList.append(text)
     except TypeError:  # no WFE
         RegionWFEList.append("")
+
+# Merni TODO: find officers
+for region_officers in [d.find("OFFICERS") for d in region_list]:
+    officer_string = " " # should be a space to avoid overspill of WFEs
+    if process_officers:
+        for officer in region_officers.findall("OFFICER"):
+            officer_nation = officer.find("NATION").text
+            officer_title = officer.find("OFFICE").text
+            if officer_title is None: officer_title = ""
+            officer_string += (officer_nation + " : " + officer_title + ", ")
+    OfficerList.append(officer_string)
 
 for region_embassies in [d.find("EMBASSIES") for d in region_list]:
     embassies = list()
@@ -360,27 +380,30 @@ ws["H1"].value = "Del. Endos"
 if process_embassies:
     ws["I1"].value = "Embassies"
 ws["J1"].value = "WFE"
+if process_officers: # Added by Merni
+    ws["K1"].value = "Officers"
 
-ws["L1"].value = "World "
-ws["M1"].value = "Data"
-ws["L2"].value = "Nations"
-ws["L3"].value = "Last Major"
-ws["L4"].value = "Secs/Nation"
-ws["L5"].value = "Nations/Sec"
-ws["L6"].value = "Last Minor"
-ws["L7"].value = "Secs/Nation"
-ws["L8"].value = "Nations/Sec"
-ws["L10"].value = "Spyglass Version"
-ws["L11"].value = "Date Generated"
-ws["M2"].value = CumulNations
-ws["M3"].value = major
-ws["M4"].value = major / CumulNations
-ws["M5"].value = 1 / (major / CumulNations)
-ws["M6"].value = MinorTime
-ws["M7"].value = MinorNatTime
-ws["M8"].value = 1 / MinorNatTime
-ws["M10"].value = VERSION
-ws["M11"].value = YMD
+
+ws["M1"].value = "World "
+ws["N1"].value = "Data"
+ws["M2"].value = "Nations"
+ws["M3"].value = "Last Major"
+ws["M4"].value = "Secs/Nation"
+ws["M5"].value = "Nations/Sec"
+ws["M6"].value = "Last Minor"
+ws["M7"].value = "Secs/Nation"
+ws["M8"].value = "Nations/Sec"
+ws["M10"].value = "Spyglass Version"
+ws["M11"].value = "Date Generated"
+ws["N2"].value = CumulNations
+ws["N3"].value = major
+ws["N4"].value = major / CumulNations
+ws["N5"].value = 1 / (major / CumulNations)
+ws["N6"].value = MinorTime
+ws["N7"].value = MinorNatTime
+ws["N8"].value = 1 / MinorNatTime
+ws["N10"].value = VERSION
+ws["N11"].value = YMD
 
 # There's probably a better way of doing this, but my coding skills are dubious :^)
 # Anyways, actually pasting the information from our various lists into the spreadsheet.
@@ -419,7 +442,8 @@ for counter, a in enumerate(RegionList):
     ws.cell(row=counter + 2, column=8).value = DelVoteList[counter] - 1
     ws.cell(row=counter + 2, column=9).value = RegionEmbassyList[counter]
     ws.cell(row=counter + 2, column=10).value = RegionWFEList[counter]
-    ws.cell(row=counter + 2, column=11).value = " "
+    ws.cell(row=counter + 2, column=11).value = OfficerList[counter] # added by Merni
+    ws.cell(row=counter + 2, column=12).value = " "
 
     # Highlight delegate-less regions. They're good for tagging, or whatever~
     if DelVoteList[counter] == 0:
