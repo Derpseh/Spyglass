@@ -87,7 +87,7 @@ if "-h" in argv or "--help" in argv:
      -s           Suppress creating a debug log file. Log files are written to
                   the current working directory.
      -l PATH      Write debug log to specified path.
-     -m           Generate a minimized sheet without WFEs embassies
+     -m           Generate a minimized sheet without WFEs, ROs and embassies
     """
     )
     print(
@@ -302,7 +302,7 @@ for wfe in [d.find("FACTBOOK") for d in region_list]:
     except TypeError:  # no WFE
         RegionWFEList.append("")
 
-# Merni TODO: find officers
+# Merni: find officers
 for region_officers in [d.find("OFFICERS") for d in region_list]:
     officer_string = " " # should be a space to avoid overspill of WFEs
     if process_officers:
