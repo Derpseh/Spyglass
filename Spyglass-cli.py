@@ -288,7 +288,7 @@ for wfe in [d.find("FACTBOOK") for d in region_list]:
     text = wfe.text
     try:
         if text[0] in ["=", "+", "-", "@"]:
-            text = text[1:]  # IMPORTANT: prevent excel from parsing WFEs as formulas
+            text = f"'{text}"  # IMPORTANT: prevent excel from parsing WFEs as formulas
         RegionWFEList.append(text)
     except TypeError:  # no WFE
         RegionWFEList.append("")
