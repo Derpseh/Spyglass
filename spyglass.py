@@ -13,7 +13,7 @@ from typing import List, Optional
 from xml.etree import ElementTree
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
-VERSION = "2.0"
+VERSION = "2.1-alpha"
 
 # Spyglass
 # Source code by Devi aka Panzer Vier
@@ -30,6 +30,12 @@ redFill = PatternFill(start_color=RED, end_color=RED, fill_type="solid")
 greenFill = PatternFill(start_color=GREEN, end_color=GREEN, fill_type="solid")
 yellowFill = PatternFill(start_color=YELLOW, end_color=YELLOW, fill_type="solid")
 
+def xlsan(content):
+    if isinstance(content, str):
+        if content[0] in ['=', '+', '-', '@']:
+            print("WARNING: unsafe content passed to Excel sheet.")
+            print(f"{content}")
+    return content
 
 # Method for writing a debug log
 def write_log(to_write: str) -> None:
@@ -70,7 +76,7 @@ def download_dump() -> None:
         for chunk in dump_request.iter_content(chunk_size=16 * 1024):
             data_dump.write(chunk)
 
-
+# TODO interactive code should not be living in entry()
 def entry(
         nation_name: str,
         process_embassies: bool = True,
@@ -109,8 +115,8 @@ def entry(
         write_log(f"ERR  {UAgent} is not a valid nation. Terminating.")
         raise SystemExit(1)
 
-    write_log(f"INFO Minor length: {MinorTime}")
-    write_log(f"INFO Major length: {MajorTime}")
+    write_log(f"INFO Minor length: {update_times['minor']}") # FIXME: should reflect update_times
+    write_log(f"INFO Major length: {update_times['major']}") # FIXME: should reflect update_times
 
     dump_path = Path("./regions.xml.gz")
     write_log("INFO Searching for data dump...")
@@ -118,6 +124,7 @@ def entry(
     dump_thread = threading.Thread(target=download_dump)
     dump_lock = threading.Lock()
 
+    downloading_flag = True
     with dump_lock:
         if interactive:
             if dump_path.exists() and dump_path.is_file():
@@ -135,6 +142,7 @@ def entry(
                 else:
                     write_log("INFO Using data dump already present...")
                     print("Using current dump...")
+                    downloading_flag = False
             else:
                 write_log("INFO No existing data dump found, downloading latest...")
                 print("No existing data dump found. Pulling data dump...")
@@ -147,7 +155,9 @@ def entry(
             write_log("INFO Download complete!")
 
     # Wait for the download thread to finish
-    dump_thread.join()
+    if downloading_flag:
+        dump_thread.join()
+
     with gzip.open("regions.xml.gz", "rb") as dump:
         regions = dump.read()
 
@@ -166,6 +176,7 @@ def entry(
     unfounded_list = ElementTree.fromstring(req2).find("REGIONS").text.split(",")
     pwless_list = ElementTree.fromstring(req).find("REGIONS").text.split(",")
 
+    region_list = list()
     region_url_list: list = []
     region_wfe_list: list = []
     region_embassy_list: list = []
@@ -176,11 +187,11 @@ def entry(
     # Ziz: Data dump soup, mmm... almost as tasty as people!
     # Aav: Refactored old code to use zip. I did leave Ziz's cursed comment though
     data = ElementTree.fromstring(regions)
-    region_list = data.findall("REGION")
-    names = [region.find("NAME") for region in region_list]
-    num_nations = [region.find("NUMNATIONS") for region in region_list]
-    delvotes = [region.find("DELEGATEVOTES") for region in region_list]
-    delauth = [region.find("DELEGATEAUTH") for region in region_list]
+    region_list_xml = data.findall("REGION")
+    names = [region.find("NAME") for region in region_list_xml]
+    num_nations = [region.find("NUMNATIONS") for region in region_list_xml]
+    delvotes = [region.find("DELEGATEVOTES") for region in region_list_xml]
+    delauth = [region.find("DELEGATEAUTH") for region in region_list_xml]
 
     # Fill er up!
     for name, nation_count, del_votes, auth in zip(names, num_nations, delvotes, delauth):
@@ -197,19 +208,19 @@ def entry(
 
     # KH: pull major times from daily dump
     # Aav: Refactored into listcomp 3/17/2022
-    major_list = [int(d.find("LASTUPDATE").text) for d in region_list]
+    major_list = [int(d.find("LASTUPDATE").text) for d in region_list_xml]
 
     # KH: gather WFE info
-    for wfe in [d.find("FACTBOOK") for d in region_list]:
+    for wfe in [d.find("FACTBOOK") for d in region_list_xml]:
         text = wfe.text
         try:
             if text[0] in ["=", "+", "-", "@"]:
-                text = text[1:]  # IMPORTANT: prevent excel from parsing WFEs as formulas
+                text = " " + text  # IMPORTANT: prevent excel from parsing WFEs as formulas
             region_wfe_list.append(text)
         except TypeError:  # no WFE
             region_wfe_list.append("")
 
-    for region_embassies in [d.find("EMBASSIES") for d in region_list]:
+    for region_embassies in [d.find("EMBASSIES") for d in region_list_xml]:
         embassies = list()
         if process_embassies:
             for embassy in region_embassies.findall("EMBASSY"):
@@ -222,7 +233,7 @@ def entry(
 
     # ...unless we're overriding it
     else:
-        major = int(MajorTime)
+        major = int(update_times['major'])
 
     # Grabbing the cumulative number of nations that've updated by the time a region has.
     # The first entry is zero because time calculations need to reflect the start of region update, not the end
@@ -232,7 +243,7 @@ def entry(
 
     # Calculate speed based on total population
     CumulNations = CumulNationList[-1]
-    MinorNatTime = int(MinorTime) / CumulNations
+    MinorNatTime = update_times['minor'] / CumulNations
     MajorNatTime = major / CumulNations
     MinTime = list()
     MajTime = list()
@@ -426,11 +437,11 @@ if __name__ == "__main__":
             try:
                 MinorTime = int(input("Minor Time, seconds (3550): "))
             except ValueError:
-                MinorTime = 3550
+                pass
             try:
                 MajorTime = int(input("Major Time, seconds (5350): "))
             except ValueError:
-                MajorTime = 5350
+                pass
             SpeedOverride = True
 
     # Set output filename
@@ -452,5 +463,11 @@ if __name__ == "__main__":
         write_log(f"INFO Spyglass started with arguments: {starting_args}")
         write_log(f"INFO User Nation: {UAgent}")
         write_log(f"INFO Out File: {filename}")
+
+    entry(
+        nation_name=UAgent,
+        process_embassies=process_embassies,
+        update_times={'minor': MinorTime, 'major': MajorTime}
+    )
 
     raise SystemExit(0)
