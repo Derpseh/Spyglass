@@ -215,7 +215,7 @@ def entry(
         text = wfe.text
         try:
             if text[0] in ["=", "+", "-", "@"]:
-                text = " " + text  # IMPORTANT: prevent excel from parsing WFEs as formulas
+                text = f"'{text}"  # IMPORTANT: prevent excel from parsing WFEs as formulas
             region_wfe_list.append(text)
         except TypeError:  # no WFE
             region_wfe_list.append("")
