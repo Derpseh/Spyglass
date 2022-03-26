@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import gzip
 import threading
+import time
+
 from requests import get
 from requests.exceptions import HTTPError
 from openpyxl import Workbook
@@ -9,7 +11,7 @@ from openpyxl.styles.colors import Color
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
-from xml.etree import ElementTree
+from xml.etree import ElementTree  # switching to lxml gets us a 10% speed up. Which is only 2 seconds on my desktop.
 import click
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
@@ -20,6 +22,7 @@ VERSION = "2.1-alpha"
 # Modifications made by Khronion (KH)
 # Ported to Python 3 with additional modifications by Zizou (Ziz)
 # Yay more modifications (Aav)
+# 🚩🚩🚩🚩🚩🚩🚩🚩🚩 (Khronion)
 
 RED = Color(rgb="FFFF0000")
 GREEN = Color(rgb="FF00FF00")
@@ -79,6 +82,8 @@ def entry(
     :param update_times: Specify update lengths. If provided, use a dictionary with keys 'major' and 'minor'.
     :return:
     """
+
+    start_time = int(time.time())
 
     # Method for writing a debug log
     def write_log(to_write: str) -> None:
@@ -367,36 +372,30 @@ def entry(
     # Ziz: Don't delete the data dump, since it can be reused if it's recent enough
 
     write_log(f"INFO Successfully saved to {filename}")
-    write_log(f"INFO Spyglass run complete. Exiting...")
+    write_log(f"INFO Spyglass run completed in {int(time.time()) - start_time} seconds. Exiting...")
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--nation", "-n", required=True, type=str,
+@click.option("--nation", "-n", prompt="Nation name", type=str,
               help="Nation to identify user by. Quote nation name if there are spaces.")
 @click.option("--out-file", "-o", default="SpyglassSheet.xlsx", type=str,
-              help="File to output the generated timesheet in XLSX format to.")
+              help="File to output the generated timesheet in XLSX format to. Defaults to SpyglassSheet.xlsx.")
+@click.option("--logging-file", "-l", default="debug.log", type=str, help="File to output the debug log to. Defaults to debug.log.")
 @click.option("--suppress-logging", "-s", is_flag=True, help="Suppress creating a debug log file.")
-@click.option("--logging-path", "-l", default="debug.log", type=str, help="Write debug log to specified path.")
-@click.option("--minimized", "-m", is_flag=True,
-              help="Generate a minimized sheet without WFEs and embassies. This overrides --wfe and --embassies")
-@click.option("--wfe", is_flag=True, help="Include WFE preview in sheet. Overriden by --minimized.")
-@click.option("--embassies", is_flag=True, help="Include embassy list in sheet. Overriden by --minimized.")
+@click.option("--wfe", is_flag=True, default=False, help="Include WFE preview in sheet.")
+@click.option("--embassies", is_flag=True, default=False, help="Include embassy list in sheet.")
 @click.option("--minor-speed", default=None, type=int,
               help="Manually specify length of minor update in seconds. Default is 3550.")
 @click.option("--major-speed", default=None, type=int,
               help="Manually specify length of major update in seconds. Default uses API to calculate.")
 @click.option("--silent", is_flag=True, help="Run silently without outputting to terminal.")
 @click.option("--stale", is_flag=True, help="Use existing dump file, if available.")
-def cli_wrapper(nation, out_file, suppress_logging, logging_path, minimized, wfe, embassies, minor_speed, major_speed, silent, stale):
+def cli_wrapper(nation, out_file, suppress_logging, logging_file, wfe, embassies, minor_speed, major_speed, silent, stale):
     """This utility generates NationStates region update timesheets."""
     # used a wrapper instead of entry() because I was trying to maintain flag backward compatibility.
-
-    if minimized:
-        embassies = False
-        wfe = False
 
     if minor_speed is None:
         minor_speed = 3550
@@ -415,7 +414,7 @@ def cli_wrapper(nation, out_file, suppress_logging, logging_path, minimized, wfe
         update_times={'minor': minor_speed, 'major': major_speed},
         filename=out_file,
         suppress_logging=suppress_logging,
-        logpath=logging_path,
+        logpath=logging_file,
         speed_override=speed_override,
         quiet=silent
     )
