@@ -11,6 +11,7 @@ from pathlib import Path
 from sys import argv
 from typing import List, Optional
 from xml.etree import ElementTree
+import click
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
 VERSION = "2.1-alpha"
@@ -20,8 +21,6 @@ VERSION = "2.1-alpha"
 # Modifications made by Khronion (KH)
 # Ported to Python 3 with additional modifications by Zizou (Ziz)
 # Yay more modifications (Aav)
-
-log_path = "debug.log"
 
 RED = Color(rgb="FFFF0000")
 GREEN = Color(rgb="FF00FF00")
@@ -60,10 +59,12 @@ def download_dump() -> None:
 def entry(
         nation_name: str,
         filename: str,
+        logpath: str = "debug.log",
         refresh_dump: bool = True,
         process_embassies: bool = False,
         process_wfe: bool = False,
         quiet: bool = False,
+        suppress_logging: bool = False,
         update_times: Optional[dict] = None,
 ) -> None:
     """
@@ -86,8 +87,10 @@ def entry(
         :param to_write: str
         :return: None
         """
-        with open(log_path, "a") as out:
-            out.write(datetime.now().strftime(f"[%Y-%m-%d %H:%M:%S] {to_write}\n"))
+
+        if not suppress_logging:
+            with open(log_path, "a") as out:
+                out.write(datetime.now().strftime(f"[%Y-%m-%d %H:%M:%S] {to_write}\n"))
         if not quiet:  # print everything unless we're in quiet mode.
             print(f"{to_write}")
 
@@ -365,6 +368,34 @@ def entry(
 
     write_log(f"INFO Successfully saved to {filename}")
     write_log(f"INFO Spyglass run complete. Exiting...")
+
+
+@click.command()
+@click.option("--name", "-n", required=True, type=str)
+@click.option("--out-file", "-o", default="SpyglassSheet.xlsx", type=str)
+@click.option("--suppress-debug", "-s", default=False, type=bool)
+@click.option("--logging-path", "-l", default="debug.log", type=str)
+@click.option("--minimized", "-m", default=False, type=bool)
+@click.option("--minor_speed", default=3550, type=int)
+@click.option("--major_speed", default=5350, type=int)
+def cli_wrapper(name, out, suppress_logging, logging_path, minimized, minor_speed, major_speed):
+    if minimized:
+        embassies = False
+        wfe = False
+    else:
+        embassies = True
+        wfe = True
+
+    entry(
+        nation_name=name,
+        refresh_dump=True,
+        process_embassies=embassies,
+        process_wfe=wfe,
+        update_times={'minor': minor_speed, 'major': major_speed},
+        filename=out,
+        suppress_logging=suppress_logging,
+        logpath=logging_path
+    )
 
 
 if __name__ == "__main__":
