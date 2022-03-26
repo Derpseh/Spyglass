@@ -8,7 +8,6 @@ from openpyxl.styles import PatternFill, Alignment
 from openpyxl.styles.colors import Color
 from datetime import datetime
 from pathlib import Path
-from sys import argv
 from typing import List, Optional
 from xml.etree import ElementTree
 import click
@@ -57,15 +56,16 @@ def download_dump() -> None:
 
 
 def entry(
-        nation_name: str,
-        filename: str,
-        logpath: str = "debug.log",
-        refresh_dump: bool = True,
-        process_embassies: bool = False,
-        process_wfe: bool = False,
-        quiet: bool = False,
-        suppress_logging: bool = False,
-        update_times: Optional[dict] = None,
+    nation_name: str,
+    filename: str,
+    logpath: str = "debug.log",
+    refresh_dump: bool = True,
+    process_embassies: bool = False,
+    process_wfe: bool = False,
+    quiet: bool = False,
+    suppress_logging: bool = False,
+    update_times: Optional[dict] = None,
+    speed_override: bool = False
 ) -> None:
     """
     Main entry point for Spyglass.
@@ -89,19 +89,19 @@ def entry(
         """
 
         if not suppress_logging:
-            with open(log_path, "a") as out:
+            with open(logpath, "a") as out:
                 out.write(datetime.now().strftime(f"[%Y-%m-%d %H:%M:%S] {to_write}\n"))
         if not quiet:  # print everything unless we're in quiet mode.
-            print(f"{to_write}")
+            click.echo(f"{to_write}")
 
-    write_log("INFO Spyglass now running with the following settings:")
+    write_log("INFO Spyglass now running with the following settings:\n")
     write_log(f"     Output path: {filename}")
     write_log(f"     Nation name: {nation_name}")
     write_log(f"     Refresh dump: {refresh_dump}")
     write_log(f"     Process embassies: {process_embassies}")
     write_log(f"     Process WFEs: {process_wfe}")
     write_log(f"     Update length override: {update_times}")
-    write_log(f"     Quiet mode: {quiet}")
+    write_log(f"     Quiet mode: {quiet}\n")
 
     if update_times is None:
         update_times = {"minor": 3550, "major": 5350}  # current default lengths as of March 25, 2022, change as needed
@@ -112,7 +112,7 @@ def entry(
 
     # Verify specified nation is valid -- terminate if not
     try:
-        params = {"nation": UAgent, "q": "influence"}
+        params = {"nation": nation_name, "q": "influence"}
         testreq = get(
             "https://www.nationstates.net/cgi-bin/api.cgi", headers=headers, params=params
         )
@@ -220,7 +220,7 @@ def entry(
             region_embassy_list.append(",".join(embassies))
 
     # Determine the total duration in seconds of minor and major, either using preset speed or calculated speed
-    if SpeedOverride:
+    if speed_override:
         major = int(update_times['major'])  # preset
     else:
         major = major_list[-1] - major_list[0]  # calculated
@@ -247,7 +247,7 @@ def entry(
         min_time.append(f"{temphours}:{tempmins}:{tempsecs}")
 
     # If user specifies update length, use special handling.
-    if SpeedOverride:
+    if speed_override:
         for a in cumul_nation_list:
             temptime = int(a * major_nat_time)
             tempsecs = temptime % 60
@@ -273,7 +273,7 @@ def entry(
     ws["C1"].value = "# Nations"
     ws["D1"].value = "Tot. Nations"
     ws["E1"].value = "Minor Upd. (est)"
-    if SpeedOverride is True:
+    if speed_override is True:
         ws["F1"].value = "Major Upd. (est)"
     else:
         ws["F1"].value = "Major Upd. (true)"
@@ -298,11 +298,11 @@ def entry(
     ws["M3"].value = major
     ws["M4"].value = major / cumul_nations
     ws["M5"].value = 1 / (major / cumul_nations)
-    ws["M6"].value = MinorTime
+    ws["M6"].value = update_times['minor']
     ws["M7"].value = minor_nat_time
     ws["M8"].value = 1 / minor_nat_time
     ws["M10"].value = VERSION
-    ws["M11"].value = YMD
+    ws["M11"].value = f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}"
 
     # There's probably a better way of doing this, but my coding skills are dubious :^)
     # Anyways, actually pasting the information from our various lists into the spreadsheet.
@@ -370,121 +370,59 @@ def entry(
     write_log(f"INFO Spyglass run complete. Exiting...")
 
 
-@click.command()
-@click.option("--name", "-n", required=True, type=str)
-@click.option("--out-file", "-o", default="SpyglassSheet.xlsx", type=str)
-@click.option("--suppress-debug", "-s", default=False, type=bool)
-@click.option("--logging-path", "-l", default="debug.log", type=str)
-@click.option("--minimized", "-m", default=False, type=bool)
-@click.option("--minor_speed", default=3550, type=int)
-@click.option("--major_speed", default=5350, type=int)
-def cli_wrapper(name, out, suppress_logging, logging_path, minimized, minor_speed, major_speed):
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--nation", "-n", required=True, type=str,
+              help="Nation to identify user by. Quote nation name if there are spaces.")
+@click.option("--out-file", "-o", default="SpyglassSheet.xlsx", type=str,
+              help="File to output the generated timesheet in XLSX format to.")
+@click.option("--suppress-logging", "-s", is_flag=True, help="Suppress creating a debug log file.")
+@click.option("--logging-path", "-l", default="debug.log", type=str, help="Write debug log to specified path.")
+@click.option("--minimized", "-m", is_flag=True,
+              help="Generate a minimized sheet without WFEs and embassies. This overrides --wfe and --embassies")
+@click.option("--wfe", is_flag=True, help="Include WFE preview in sheet. Overriden by --minimized.")
+@click.option("--embassies", is_flag=True, help="Include embassy list in sheet. Overriden by --minimized.")
+@click.option("--minor-speed", default=None, type=int,
+              help="Manually specify length of minor update in seconds. Default is 3550.")
+@click.option("--major-speed", default=None, type=int,
+              help="Manually specify length of major update in seconds. Default uses API to calculate.")
+@click.option("--silent", is_flag=True, help="Run silently without outputting to terminal.")
+@click.option("--stale", is_flag=True, help="Use existing dump file, if available.")
+def cli_wrapper(nation, out_file, suppress_logging, logging_path, minimized, wfe, embassies, minor_speed, major_speed, silent, stale):
+    """This utility generates NationStates region update timesheets."""
+    # used a wrapper instead of entry() because I was trying to maintain flag backward compatibility.
+
     if minimized:
         embassies = False
         wfe = False
+
+    if minor_speed is None:
+        minor_speed = 3550
+
+    if major_speed is None:
+        major_speed = 5350
+        speed_override = False
     else:
-        embassies = True
-        wfe = True
+        speed_override = True  # if the user is overriding major length, we don't want to use LASTUPDATE.
 
     entry(
-        nation_name=name,
-        refresh_dump=True,
+        nation_name=nation,
+        refresh_dump=(not stale),
         process_embassies=embassies,
         process_wfe=wfe,
         update_times={'minor': minor_speed, 'major': major_speed},
-        filename=out,
+        filename=out_file,
         suppress_logging=suppress_logging,
-        logpath=logging_path
+        logpath=logging_path,
+        speed_override=speed_override,
+        quiet=silent
     )
+
+    # open the newly generated file. If folks don't like this, we can get rid of it.
+    click.launch(out_file, locate=True)  # what happens if you run this in a terminal-only session?
 
 
 if __name__ == "__main__":
-    # Show help message and terminate
-    if "-h" in argv or "--help" in argv:
-        print(f"Spyglass {VERSION}: Generate NationStates region update timesheets.\n")
-        print("Developed by Panzer Vier, with additions by Khronion, Zizou, and Aav\n")
-        print(f"usage: {argv[0]} [-h] [-n NATION] [-o OUTFILE] [-s | -l PATH]\n")
-        print(
-            """Optional arguments:
-         -h           Show this help message and exit.
-         -n NATION    Specify Nation to identify user by. In order to comply with
-                      NationStates API rules, this must be the user's nation. Use
-                      underscores instead of spaces.
-         -o OUTFILE   File to output the generated timesheet in XLSX format to.
-         -s           Suppress creating a debug log file. Log files are written to
-                      the current working directory.
-         -l PATH      Write debug log to specified path.
-         -m           Generate a minimized sheet without WFEs and embassies
-        """
-        )
-        print(
-            """If run without arguments, Spyglass runs in interactive mode and outputs to its
-    working directory."""
-        )
-        raise SystemExit(1)
-
-    interactive = True
-    process_embassies = True
-    log = True
-
-    SpeedOverride = False
-    MinorTime = 3550
-    MajorTime = 5350
-
-    YMD = f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}"
-
-    # Set nation name
-    if "-n" in argv:
-        interactive = False
-        UAgent = argv[argv.index("-n") + 1]
-    else:
-        print(f"Spyglass {VERSION}: Generate NationStates region update timesheets.")
-        UAgent = input("Nation Name: ")
-        filename = f"SpyglassSheet{YMD}.xlsx"
-
-        if query("Include region embassies? (y/n, defaults to y) ", ["y", "n", ""]) == "n":
-            process_embassies = False
-
-        # Ziz: Update lengths are now 1.5hrs and 2.5hrs for minor and major respectively
-        # Aav: Update lengths are now .75-1hrs and 1.5-1.75hrs for minor and major respectively
-        if (
-                query(
-                    "Do you want to manually specify update lengths? (y/n, defaults to n) ",
-                    ["y", "n", ""],
-                )
-                == "y"
-        ):
-            try:
-                MinorTime = int(input("Minor Time, seconds (3550): "))
-            except ValueError:
-                pass
-            try:
-                MajorTime = int(input("Major Time, seconds (5350): "))
-            except ValueError:
-                pass
-            SpeedOverride = True
-
-    # Set output filename
-    if "-o" in argv:
-        filename = argv[argv.index("-o") + 1]
-    else:
-        filename = f"SpyglassSheet{YMD}.xlsx"
-
-    # Enable debug log
-    if "-s" in argv:
-        log = False
-
-    if "-m" in argv:
-        process_embassies = False
-    else:
-        if "-l" in argv:
-            log_path = argv[argv.index("-l") + 1]
-        starting_args = " ".join(argv[1:])
-
-    entry(
-        nation_name=UAgent,
-        refresh_dump=True,
-        process_embassies=process_embassies,
-        update_times={'minor': MinorTime, 'major': MajorTime},
-        filename=filename
-    )
+    cli_wrapper()
