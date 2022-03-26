@@ -1,5 +1,14 @@
 # Interpreting a Spyglass Sheet
 
+After running Spyglass, it will generate a spreadsheet that can be opened in any spreadsheet program. Common choices include:
+
+- Microsoft Excel (Windows, macOS)
+- LibreOffice (Linux, macOS, Windows)
+- Numbers (macOS)
+- Google Sheets (web-based, mobile)
+
+The following table explains the layout of a Spyglass spreadsheet.
+
 | Column | Title              | Description                                                                                                     |
 |--------|--------------------|-----------------------------------------------------------------------------------------------------------------|
 | A      | Region Name        | Region name in NationStates                                                                                     |
