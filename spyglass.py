@@ -30,26 +30,6 @@ redFill = PatternFill(start_color=RED, end_color=RED, fill_type="solid")
 greenFill = PatternFill(start_color=GREEN, end_color=GREEN, fill_type="solid")
 yellowFill = PatternFill(start_color=YELLOW, end_color=YELLOW, fill_type="solid")
 
-def xlsan(content):
-    if isinstance(content, str):
-        if content[0] in ['=', '+', '-', '@']:
-            print("WARNING: unsafe content passed to Excel sheet.")
-            print(f"{content}")
-    return content
-
-# Method for writing a debug log
-def write_log(to_write: str) -> None:
-    """
-    Writes a string to the debug log.
-    :param to_write: str
-    :return: None
-    """
-    if log:
-        with open(log_path, "a") as out:
-            out.write(datetime.now().strftime(f"[%Y-%m-%d %H:%M:%S] {to_write}\n"))
-    else:
-        pass
-
 
 # Method for getting user input
 def query(args: str, options: List[str]) -> str:
@@ -76,29 +56,55 @@ def download_dump() -> None:
         for chunk in dump_request.iter_content(chunk_size=16 * 1024):
             data_dump.write(chunk)
 
-# TODO interactive code should not be living in entry()
+
 def entry(
         nation_name: str,
-        process_embassies: bool = True,
-        factbooks: bool = True,
+        filename: str,
+        refresh_dump: bool = True,
+        process_embassies: bool = False,
+        process_wfe: bool = False,
+        quiet: bool = False,
         update_times: Optional[dict] = None,
 ) -> None:
     """
-    Main entry point for the program to allow for modularization and usage of GUI framework for wrapping,
-    while permitting command line usage.
+    Main entry point for Spyglass.
 
-    :param filename:
-    :param nation_name: str
-    :param process_embassies: bool
-    :param factbooks: bool
-    :param update_times: Optional[dict]
-    :return: None
+    :param nation_name: User's nation name.
+    :param filename: Filename to use for output timesheet.
+    :param refresh_dump: Force redownload of dump even if one already exists. Defaults to True.
+    :param process_embassies: Process embassy lists. Defaults to False.
+    :param process_wfe: Process WFEs. Defaults to False.
+    :param quiet: Print log output. Defaults to True.
+    :param update_times: Specify update lengths. If provided, use a dictionary with keys 'major' and 'minor'.
+    :return:
     """
+
+    # Method for writing a debug log
+    def write_log(to_write: str) -> None:
+        """
+        Writes a string to the debug log.
+        :param to_write: str
+        :return: None
+        """
+        with open(log_path, "a") as out:
+            out.write(datetime.now().strftime(f"[%Y-%m-%d %H:%M:%S] {to_write}\n"))
+        if not quiet:  # print everything unless we're in quiet mode.
+            print(f"{to_write}")
+
+    write_log("INFO Spyglass now running with the following settings:")
+    write_log(f"     Output path: {filename}")
+    write_log(f"     Nation name: {nation_name}")
+    write_log(f"     Refresh dump: {refresh_dump}")
+    write_log(f"     Process embassies: {process_embassies}")
+    write_log(f"     Process WFEs: {process_wfe}")
+    write_log(f"     Update length override: {update_times}")
+    write_log(f"     Quiet mode: {quiet}")
+
     if update_times is None:
-        update_times = {"minor": 3550, "major": 5350}
+        update_times = {"minor": 3550, "major": 5350}  # current default lengths as of March 25, 2022, change as needed
 
     headers = {
-        "User-Agent": f"Spyglass/{VERSION} (github: https://github.com/Derpseh/Spyglass ; user:{UAgent}; Authenticating)"
+        "User-Agent": f"Spyglass/{VERSION} (github: https://github.com/Derpseh/Spyglass ; user:{nation_name}; Authenticating)"
     }
 
     # Verify specified nation is valid -- terminate if not
@@ -109,14 +115,11 @@ def entry(
         )
         testreq.raise_for_status()
     except HTTPError:
-        print(
-            "Nation not found. Be sure to input the name of a nation that actually exists."
-        )
-        write_log(f"ERR  {UAgent} is not a valid nation. Terminating.")
-        raise SystemExit(1)
+        write_log(f"ERR  {nation_name} is not a valid nation. Must use valid nation.")
+        raise RuntimeError(f"ERR  {nation_name} is not a valid nation. Must use valid nation.")
 
-    write_log(f"INFO Minor length: {update_times['minor']}") # FIXME: should reflect update_times
-    write_log(f"INFO Major length: {update_times['major']}") # FIXME: should reflect update_times
+    write_log(f"INFO Minor length: {update_times['minor']}")
+    write_log(f"INFO Major length: {update_times['major']}")
 
     dump_path = Path("./regions.xml.gz")
     write_log("INFO Searching for data dump...")
@@ -124,46 +127,30 @@ def entry(
     dump_thread = threading.Thread(target=download_dump)
     dump_lock = threading.Lock()
 
-    downloading_flag = True
     with dump_lock:
-        if interactive:
-            if dump_path.exists() and dump_path.is_file():
-                if (
-                        query(
-                            "Existing data dump found. Do you want to re-download the latest dump? (y/n, defaults to y) ",
-                            ["y", "n", ""],
-                        )
-                        == "y"
-                ):
-                    write_log("INFO Found data dump, but re-downloading the latest..")
-                    print("Pulling data dump...")
-                    dump_thread.start()
-                    write_log("INFO Download complete!")
-                else:
-                    write_log("INFO Using data dump already present...")
-                    print("Using current dump...")
-                    downloading_flag = False
-            else:
-                write_log("INFO No existing data dump found, downloading latest...")
-                print("No existing data dump found. Pulling data dump...")
+        if dump_path.exists() and dump_path.is_file():
+            if refresh_dump:
+                write_log("INFO Found data dump, but re-downloading the latest..")
                 dump_thread.start()
                 write_log("INFO Download complete!")
+            else:
+                write_log("INFO Using data dump already present...")
         else:
-            write_log("INFO running in non-interactive mode, downloading data dump...")
-            print("Pulling data dump...")
+            write_log("INFO No existing data dump found, downloading latest...")
             dump_thread.start()
             write_log("INFO Download complete!")
 
-    # Wait for the download thread to finish
-    if downloading_flag:
+    # If download was started, wait for the download thread to finish
+    if dump_thread.is_alive():
         dump_thread.join()
 
     with gzip.open("regions.xml.gz", "rb") as dump:
         regions = dump.read()
 
     # Sanitize our founderless regions list a wee bit, 'cause at the moment, it's xml, and xml is gross.
-    print("Processing data...")
-    # Total number of queries is low, so rate limit is unnecessary
+    write_log("INFO Processing data...")
+    # Total number of queries is low, so rate limit is unnecessary.
+    # We also don't catch any errors because we want execution to halt if the API doesn't respond.
     req = get(
         "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=-password",
         headers=headers,
@@ -196,12 +183,12 @@ def entry(
     # Fill er up!
     for name, nation_count, del_votes, auth in zip(names, num_nations, delvotes, delauth):
         region_list.append(name.text)
-        UrlString = f'=HYPERLINK("https://www.nationstates.net/region={name.text}")'
-        region_url_list.append(UrlString.replace(" ", "_"))
+        url_string = f'=HYPERLINK("https://www.nationstates.net/region={name.text}")'
+        region_url_list.append(url_string.replace(" ", "_"))
         num_nation_list.append(int(nation_count.text))
         del_vote_list.append(int(del_votes.text))
-        AuthString = auth.text
-        if AuthString[0] == "X":
+        auth_string = auth.text
+        if auth_string[0] == "X":
             exec_list.append(True)
         else:
             exec_list.append(False)
@@ -211,66 +198,66 @@ def entry(
     major_list = [int(d.find("LASTUPDATE").text) for d in region_list_xml]
 
     # KH: gather WFE info
-    for wfe in [d.find("FACTBOOK") for d in region_list_xml]:
-        text = wfe.text
-        try:
-            if text[0] in ["=", "+", "-", "@"]:
-                text = f"'{text}"  # IMPORTANT: prevent excel from parsing WFEs as formulas
-            region_wfe_list.append(text)
-        except TypeError:  # no WFE
-            region_wfe_list.append("")
+    if process_wfe:
+        for wfe in [d.find("FACTBOOK") for d in region_list_xml]:
+            text = wfe.text
+            try:
+                if text[0] in ["=", "+", "-", "@"]:
+                    text = f"'{text}"  # IMPORTANT: prevent excel from parsing WFEs as formulas
+                region_wfe_list.append(text)
+            except TypeError:  # no WFE
+                region_wfe_list.append("")
 
-    for region_embassies in [d.find("EMBASSIES") for d in region_list_xml]:
-        embassies = list()
-        if process_embassies:
-            for embassy in region_embassies.findall("EMBASSY"):
-                embassies.append(embassy.text)
-        region_embassy_list.append(",".join(embassies))
+    if process_embassies:
+        for region_embassies in [d.find("EMBASSIES") for d in region_list_xml]:
+            embassies = list()
+            if process_embassies:
+                for embassy in region_embassies.findall("EMBASSY"):
+                    embassies.append(embassy.text)
+            region_embassy_list.append(",".join(embassies))
 
-    # Determine the total duration in seconds of minor and major
-    if not SpeedOverride:
-        major = major_list[-1] - major_list[0]
-
-    # ...unless we're overriding it
+    # Determine the total duration in seconds of minor and major, either using preset speed or calculated speed
+    if SpeedOverride:
+        major = int(update_times['major'])  # preset
     else:
-        major = int(update_times['major'])
+        major = major_list[-1] - major_list[0]  # calculated
 
     # Grabbing the cumulative number of nations that've updated by the time a region has.
     # The first entry is zero because time calculations need to reflect the start of region update, not the end
-    CumulNationList = [0]
+    cumul_nation_list = [0]
     for a in num_nation_list:
-        CumulNationList.append(int(a) + CumulNationList[-1])
+        cumul_nation_list.append(int(a) + cumul_nation_list[-1])
 
     # Calculate speed based on total population
-    CumulNations = CumulNationList[-1]
-    MinorNatTime = update_times['minor'] / CumulNations
-    MajorNatTime = major / CumulNations
-    MinTime = list()
-    MajTime = list()
+    cumul_nations = cumul_nation_list[-1]
+    minor_nat_time = update_times['minor'] / cumul_nations
+    major_nat_time = major / cumul_nations
+    min_time = list()
+    maj_time = list()
 
     # Getting the approximate major/minor update times.
-    for a in CumulNationList:
-        temptime = int(a * MinorNatTime)
+    for a in cumul_nation_list:
+        temptime = int(a * minor_nat_time)
         tempsecs = temptime % 60
         tempmins = int((temptime // 60) % 60)
         temphours = int(temptime // 3600)
-        MinTime.append(f"{temphours}:{tempmins}:{tempsecs}")
+        min_time.append(f"{temphours}:{tempmins}:{tempsecs}")
 
     # If user specifies update length, use special handling.
     if SpeedOverride:
-        for a in CumulNationList:
-            temptime = int(a * MajorNatTime)
+        for a in cumul_nation_list:
+            temptime = int(a * major_nat_time)
             tempsecs = temptime % 60
             tempmins = int((temptime // 60) % 60)
             temphours = int(temptime // 3600)
-            MajTime.append(f"{temphours}:{tempmins}:{tempsecs}")
+            maj_time.append(f"{temphours}:{tempmins}:{tempsecs}")
     else:
         for a in major_list:
             temptime = a - major_list[0]
             tempsecs = temptime % 60
             tempmins = int((temptime // 60) % 60)
             temphours = int(temptime // 3600)
-            MajTime.append(f"{temphours}:{tempmins}:{tempsecs}")
+            maj_time.append(f"{temphours}:{tempmins}:{tempsecs}")
 
     wb = Workbook()
     ws = wb.active
@@ -289,8 +276,8 @@ def entry(
         ws["F1"].value = "Major Upd. (true)"
     ws["G1"].value = "Del. Votes"
     ws["H1"].value = "Del. Endos"
-    if process_embassies:
-        ws["I1"].value = "Embassies"
+
+    ws["I1"].value = "Embassies"
     ws["J1"].value = "WFE"
 
     ws["L1"].value = "World "
@@ -304,13 +291,13 @@ def entry(
     ws["L8"].value = "Nations/Sec"
     ws["L10"].value = "Spyglass Version"
     ws["L11"].value = "Date Generated"
-    ws["M2"].value = CumulNations
+    ws["M2"].value = cumul_nations
     ws["M3"].value = major
-    ws["M4"].value = major / CumulNations
-    ws["M5"].value = 1 / (major / CumulNations)
+    ws["M4"].value = major / cumul_nations
+    ws["M5"].value = 1 / (major / cumul_nations)
     ws["M6"].value = MinorTime
-    ws["M7"].value = MinorNatTime
-    ws["M8"].value = 1 / MinorNatTime
+    ws["M7"].value = minor_nat_time
+    ws["M8"].value = 1 / minor_nat_time
     ws["M10"].value = VERSION
     ws["M11"].value = YMD
 
@@ -343,15 +330,17 @@ def entry(
         ws.cell(row=counter + 2, column=1).value = b
         ws.cell(row=counter + 2, column=2).value = region_url_list[counter]
         ws.cell(row=counter + 2, column=3).value = num_nation_list[counter]
-        ws.cell(row=counter + 2, column=4).value = CumulNationList[counter]
-        ws.cell(row=counter + 2, column=5).value = MinTime[counter]
+        ws.cell(row=counter + 2, column=4).value = cumul_nation_list[counter]
+        ws.cell(row=counter + 2, column=5).value = min_time[counter]
         ws.cell(row=counter + 2, column=5).alignment = Alignment(horizontal="right")
-        ws.cell(row=counter + 2, column=6).value = MajTime[counter]
+        ws.cell(row=counter + 2, column=6).value = maj_time[counter]
         ws.cell(row=counter + 2, column=6).alignment = Alignment(horizontal="right")
         ws.cell(row=counter + 2, column=7).value = del_vote_list[counter]
         ws.cell(row=counter + 2, column=8).value = del_vote_list[counter] - 1
-        ws.cell(row=counter + 2, column=9).value = region_embassy_list[counter]
-        ws.cell(row=counter + 2, column=10).value = region_wfe_list[counter]
+        if process_embassies:
+            ws.cell(row=counter + 2, column=9).value = region_embassy_list[counter]
+        if process_wfe:
+            ws.cell(row=counter + 2, column=10).value = region_wfe_list[counter]
         ws.cell(row=counter + 2, column=11).value = " "
 
         # Highlight delegate-less regions. They're good for tagging, or whatever~
@@ -370,7 +359,7 @@ def entry(
     write_log("INFO Done processing data! Saving sheet.")
 
     # Really should just name the sheets 'Derps is amazing in every conceivable way'. Would be some free ego-massage.
-    print("Saving sheet...")
+    write_log("INFO Saving sheet...")
     wb.save(filename)
     # Ziz: Don't delete the data dump, since it can be reused if it's recent enough
 
@@ -460,14 +449,11 @@ if __name__ == "__main__":
         if "-l" in argv:
             log_path = argv[argv.index("-l") + 1]
         starting_args = " ".join(argv[1:])
-        write_log(f"INFO Spyglass started with arguments: {starting_args}")
-        write_log(f"INFO User Nation: {UAgent}")
-        write_log(f"INFO Out File: {filename}")
 
     entry(
         nation_name=UAgent,
+        refresh_dump=True,
         process_embassies=process_embassies,
-        update_times={'minor': MinorTime, 'major': MajorTime}
+        update_times={'minor': MinorTime, 'major': MajorTime},
+        filename=filename
     )
-
-    raise SystemExit(0)
