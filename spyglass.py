@@ -11,7 +11,9 @@ from openpyxl.styles.colors import Color
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
-from xml.etree import ElementTree  # switching to lxml gets us a 10% speed up. Which is only 2 seconds on my desktop.
+from xml.etree import (
+    ElementTree,
+)  # switching to lxml gets us a 10% speed up. Which is only 2 seconds on my desktop.
 import click
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
@@ -22,7 +24,7 @@ VERSION = "2.1-alpha"
 # Modifications made by Khronion (KH)
 # Ported to Python 3 with additional modifications by Zizou (Ziz)
 # Yay more modifications (Aav)
-# 🚩🚩🚩🚩🚩🚩🚩🚩🚩 (Khronion)
+# 🚩🚩🚩🚩🚩🚩🚩🚩🚩(this line used to be flag emojis until Black removed it) (Khronion)
 
 RED = Color(rgb="FFFF0000")
 GREEN = Color(rgb="FF00FF00")
@@ -68,7 +70,7 @@ def entry(
     quiet: bool = False,
     suppress_logging: bool = False,
     update_times: Optional[dict] = None,
-    speed_override: bool = False
+    speed_override: bool = False,
 ) -> None:
     """
     Main entry point for Spyglass.
@@ -79,7 +81,9 @@ def entry(
     :param process_embassies: Process embassy lists. Defaults to False.
     :param process_wfe: Process WFEs. Defaults to False.
     :param quiet: Print log output. Defaults to True.
+    :param suppress_logging: Disables logging.
     :param update_times: Specify update lengths. If provided, use a dictionary with keys 'major' and 'minor'.
+    :param speed_override: If true, uses major update time from update_times instead of LASTUPDATE
     :return:
     """
 
@@ -109,7 +113,10 @@ def entry(
     write_log(f"     Quiet mode: {quiet}\n")
 
     if update_times is None:
-        update_times = {"minor": 3550, "major": 5350}  # current default lengths as of March 25, 2022, change as needed
+        update_times = {
+            "minor": 3550,
+            "major": 5350,
+        }  # current default lengths as of March 25, 2022, change as needed
 
     headers = {
         "User-Agent": f"Spyglass/{VERSION} (github: https://github.com/Derpseh/Spyglass ; user:{nation_name}; Authenticating)"
@@ -119,12 +126,16 @@ def entry(
     try:
         params = {"nation": nation_name, "q": "influence"}
         testreq = get(
-            "https://www.nationstates.net/cgi-bin/api.cgi", headers=headers, params=params
+            "https://www.nationstates.net/cgi-bin/api.cgi",
+            headers=headers,
+            params=params,
         )
         testreq.raise_for_status()
     except HTTPError:
         write_log(f"ERR  {nation_name} is not a valid nation. Must use valid nation.")
-        raise RuntimeError(f"ERR  {nation_name} is not a valid nation. Must use valid nation.")
+        raise RuntimeError(
+            f"ERR  {nation_name} is not a valid nation. Must use valid nation."
+        )
 
     write_log(f"INFO Minor length: {update_times['minor']}")
     write_log(f"INFO Major length: {update_times['major']}")
@@ -189,7 +200,9 @@ def entry(
     delauth = [region.find("DELEGATEAUTH") for region in region_list_xml]
 
     # Fill er up!
-    for name, nation_count, del_votes, auth in zip(names, num_nations, delvotes, delauth):
+    for name, nation_count, del_votes, auth in zip(
+        names, num_nations, delvotes, delauth
+    ):
         region_list.append(name.text)
         url_string = f'=HYPERLINK("https://www.nationstates.net/region={name.text}")'
         region_url_list.append(url_string.replace(" ", "_"))
@@ -226,7 +239,7 @@ def entry(
 
     # Determine the total duration in seconds of minor and major, either using preset speed or calculated speed
     if speed_override:
-        major = int(update_times['major'])  # preset
+        major = int(update_times["major"])  # preset
     else:
         major = major_list[-1] - major_list[0]  # calculated
 
@@ -238,7 +251,7 @@ def entry(
 
     # Calculate speed based on total population
     cumul_nations = cumul_nation_list[-1]
-    minor_nat_time = update_times['minor'] / cumul_nations
+    minor_nat_time = update_times["minor"] / cumul_nations
     major_nat_time = major / cumul_nations
     min_time = list()
     maj_time = list()
@@ -303,11 +316,13 @@ def entry(
     ws["M3"].value = major
     ws["M4"].value = major / cumul_nations
     ws["M5"].value = 1 / (major / cumul_nations)
-    ws["M6"].value = update_times['minor']
+    ws["M6"].value = update_times["minor"]
     ws["M7"].value = minor_nat_time
     ws["M8"].value = 1 / minor_nat_time
     ws["M10"].value = VERSION
-    ws["M11"].value = f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}"
+    ws[
+        "M11"
+    ].value = f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}"
 
     # There's probably a better way of doing this, but my coding skills are dubious :^)
     # Anyways, actually pasting the information from our various lists into the spreadsheet.
@@ -372,28 +387,73 @@ def entry(
     # Ziz: Don't delete the data dump, since it can be reused if it's recent enough
 
     write_log(f"INFO Successfully saved to {filename}")
-    write_log(f"INFO Spyglass run completed in {int(time.time()) - start_time} seconds. Exiting...")
+    write_log(
+        f"INFO Spyglass run completed in {int(time.time()) - start_time} seconds. Exiting..."
+    )
 
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--nation", "-n", prompt="Nation name", type=str,
-              help="Nation to identify user by. Quote nation name if there are spaces.")
-@click.option("--out-file", "-o", default="SpyglassSheet.xlsx", type=str,
-              help="File to output the generated timesheet in XLSX format to. Defaults to SpyglassSheet.xlsx.")
-@click.option("--logging-file", "-l", default="debug.log", type=str, help="File to output the debug log to. Defaults to debug.log.")
-@click.option("--suppress-logging", "-s", is_flag=True, help="Suppress creating a debug log file.")
-@click.option("--wfe", is_flag=True, default=False, help="Include WFE preview in sheet.")
-@click.option("--embassies", is_flag=True, default=False, help="Include embassy list in sheet.")
-@click.option("--minor-speed", default=None, type=int,
-              help="Manually specify length of minor update in seconds. Default is 3550.")
-@click.option("--major-speed", default=None, type=int,
-              help="Manually specify length of major update in seconds. Default uses API to calculate.")
-@click.option("--silent", is_flag=True, help="Run silently without outputting to terminal.")
+@click.option(
+    "--nation",
+    "-n",
+    prompt="Nation name",
+    type=str,
+    help="Nation to identify user by. Quote nation name if there are spaces.",
+)
+@click.option(
+    "--out-file",
+    "-o",
+    default="SpyglassSheet.xlsx",
+    type=str,
+    help="File to output the generated timesheet in XLSX format to. Defaults to SpyglassSheet.xlsx.",
+)
+@click.option(
+    "--logging-file",
+    "-l",
+    default="debug.log",
+    type=str,
+    help="File to output the debug log to. Defaults to debug.log.",
+)
+@click.option(
+    "--suppress-logging", "-s", is_flag=True, help="Suppress creating a debug log file."
+)
+@click.option(
+    "--wfe", is_flag=True, default=False, help="Include WFE preview in sheet."
+)
+@click.option(
+    "--embassies", is_flag=True, default=False, help="Include embassy list in sheet."
+)
+@click.option(
+    "--minor-speed",
+    default=None,
+    type=int,
+    help="Manually specify length of minor update in seconds. Default is 3550.",
+)
+@click.option(
+    "--major-speed",
+    default=None,
+    type=int,
+    help="Manually specify length of major update in seconds. Default uses API to calculate.",
+)
+@click.option(
+    "--silent", is_flag=True, help="Run silently without outputting to terminal."
+)
 @click.option("--stale", is_flag=True, help="Use existing dump file, if available.")
-def cli_wrapper(nation, out_file, suppress_logging, logging_file, wfe, embassies, minor_speed, major_speed, silent, stale):
+def cli_wrapper(
+    nation,
+    out_file,
+    suppress_logging,
+    logging_file,
+    wfe,
+    embassies,
+    minor_speed,
+    major_speed,
+    silent,
+    stale,
+):
     """This utility generates NationStates region update timesheets."""
     # used a wrapper instead of entry() because I was trying to maintain flag backward compatibility.
 
@@ -411,16 +471,18 @@ def cli_wrapper(nation, out_file, suppress_logging, logging_file, wfe, embassies
         refresh_dump=(not stale),
         process_embassies=embassies,
         process_wfe=wfe,
-        update_times={'minor': minor_speed, 'major': major_speed},
+        update_times={"minor": minor_speed, "major": major_speed},
         filename=out_file,
         suppress_logging=suppress_logging,
         logpath=logging_file,
         speed_override=speed_override,
-        quiet=silent
+        quiet=silent,
     )
 
     # open the newly generated file. If folks don't like this, we can get rid of it.
-    click.launch(out_file, locate=True)  # what happens if you run this in a terminal-only session?
+    click.launch(
+        out_file, locate=True
+    )  # what happens if you run this in a terminal-only session?
 
 
 if __name__ == "__main__":
