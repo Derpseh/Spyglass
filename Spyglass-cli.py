@@ -61,9 +61,9 @@ def download_dump(YMD) -> None:
     Downloads the most recent daily dump from NS.
     :return: None
     """
-    #dump_request = get(
-    #    "https://www.nationstates.net/pages/regions.xml.gz", stream=True
-    #)
+    dump_request = get(
+        "https://www.nationstates.net/pages/regions.xml.gz", stream=True
+    )
     with open("regions_"+YMD+".xml.gz", "wb") as data_dump:
         for chunk in dump_request.iter_content(chunk_size=16 * 1024):
             data_dump.write(chunk)
