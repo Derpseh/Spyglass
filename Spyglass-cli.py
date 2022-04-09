@@ -56,15 +56,15 @@ def query(args: str, options: List[str]) -> str:
 
 
 # Method for downloading data dump, and saving it to disk
-def download_dump() -> None:
+def download_dump(YMD) -> None:
     """
     Downloads the most recent daily dump from NS.
     :return: None
     """
-    dump_request = get(
-        "https://www.nationstates.net/pages/regions.xml.gz", stream=True
-    )
-    with open("regions.xml.gz", "wb") as data_dump:
+    #dump_request = get(
+    #    "https://www.nationstates.net/pages/regions.xml.gz", stream=True
+    #)
+    with open("regions_"+YMD+".xml.gz", "wb") as data_dump:
         for chunk in dump_request.iter_content(chunk_size=16 * 1024):
             data_dump.write(chunk)
 
@@ -87,6 +87,9 @@ if "-h" in argv or "--help" in argv:
                   the current working directory.
      -l PATH      Write debug log to specified path.
      -m           Generate a minimized sheet without WFEs and embassies
+     -d PATH    Use the specified data dump (.xml.gz) 
+                 In absence of this spyglass will use the most recent downloaded
+                 data dump, or download it if it is not available
     """
     )
     print(
@@ -185,35 +188,35 @@ write_log(f"INFO Major length: {MajorTime}")
 
 write_log("INFO Searching for data dump...")
 
-# Ziz: If a data dump is detected in the current directory, ask if user wants to re-download latest dump
-# Ziz: Otherwise just download the latest data dump if nothing is detected
-dump_path = Path("./regions.xml.gz")
-if interactive:
-    if dump_path.exists() and dump_path.is_file():
+# By default the dump uses the current date
+dump_path = Path("./regions_"+YMD+".xml.gz")
+# However the user can specify theyir own
+if "-d" in argv:
+    dump_path = Path(argv[argv.index("-d") + 1])
+
+if dump_path.exists() and dump_path.is_file():
+    print("Data dump for this date found.")
+else:
+    write_log("INFO no data dump file")
+    if interactive:
         if (
                 query(
-                    "Existing data dump found. Do you want to re-download the latest dump? (y/n, defaults to y) ",
+                    "No data dump found. Do you want to download the latest dump? (y/n, defaults to y) ",
                     ["y", "n", ""],
                 )
                 == "y"
         ):
-            write_log("INFO Found data dump, but re-downloading the latest..")
             print("Pulling data dump...")
-            download_dump()
-            write_log("INFO Download complete!")
+            write_log("INFO downloading data dump at user's request...")
+            download_dump(YMD)
         else:
-            write_log("INFO Using data dump already present...")
-            print("Using current dump...")
+            print("Spyglass cannot function without a data dump. Exiting.")
+            exit
     else:
-        write_log("INFO No existing data dump found, downloading latest...")
-        print("No existing data dump found. Pulling data dump...")
-        download_dump()
+        write_log("INFO running in non-interactive mode, downloading data dump...")
+        print("Pulling data dump...")
+        download_dump(YMD)
         write_log("INFO Download complete!")
-else:
-    write_log("INFO running in non-interactive mode, downloading data dump...")
-    print("Pulling data dump...")
-    download_dump()
-    write_log("INFO Download complete!")
 
 redFill = PatternFill(start_color=RED, end_color=RED, fill_type="solid")
 greenFill = PatternFill(start_color=GREEN, end_color=GREEN, fill_type="solid")
@@ -221,7 +224,7 @@ yellowFill = PatternFill(start_color=YELLOW, end_color=YELLOW, fill_type="solid"
 
 # Un-gzipping
 # Ziz: Now we can just decompress the dump and hand it to the parser without writing to disk
-with gzip.open("regions.xml.gz", "rb") as dump:
+with gzip.open(str(dump_path), "rb") as dump:
     regions = dump.read()
 
 # Opening up my virtual sheet. Gotta find a better name for it, sometime. The pink tab colour's pretty sweet, tho.
