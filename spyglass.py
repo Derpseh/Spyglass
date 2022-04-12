@@ -49,13 +49,13 @@ def query(args: str, options: List[str]) -> str:
 
 
 # Method for downloading data dump, and saving it to disk
-def download_dump() -> None:
+def download_dump(dumpName) -> None:
     """
     Downloads the most recent daily dump from NS.
     :return: None
     """
     dump_request = get("https://www.nationstates.net/pages/regions.xml.gz", stream=True)
-    with open("regions.xml.gz", "wb") as data_dump:
+    with open(dumpName, "wb") as data_dump:
         for chunk in dump_request.iter_content(chunk_size=16 * 1024):
             data_dump.write(chunk)
 
@@ -64,6 +64,7 @@ def entry(
     nation_name: str,
     filename: str,
     logpath: str = "debug.log",
+    data_dump: str = "./regions.xml.gz",
     refresh_dump: bool = True,
     process_embassies: bool = False,
     process_wfe: bool = False,
@@ -106,6 +107,7 @@ def entry(
     write_log("INFO Spyglass now running with the following settings:\n")
     write_log(f"     Output path: {filename}")
     write_log(f"     Nation name: {nation_name}")
+    write_log(f"     Dump Filename: {data_dump}")
     write_log(f"     Refresh dump: {refresh_dump}")
     write_log(f"     Process embassies: {process_embassies}")
     write_log(f"     Process WFEs: {process_wfe}")
@@ -140,10 +142,10 @@ def entry(
     write_log(f"INFO Minor length: {update_times['minor']}")
     write_log(f"INFO Major length: {update_times['major']}")
 
-    dump_path = Path("./regions.xml.gz")
+    dump_path = Path(data_dump)
     write_log("INFO Searching for data dump...")
 
-    dump_thread = threading.Thread(target=download_dump)
+    dump_thread = threading.Thread(target=download_dump, args=[data_dump])
     dump_lock = threading.Lock()
 
     with dump_lock:
@@ -163,7 +165,7 @@ def entry(
     if dump_thread.is_alive():
         dump_thread.join()
 
-    with gzip.open("regions.xml.gz", "rb") as dump:
+    with gzip.open(data_dump, "rb") as dump:
         regions = dump.read()
 
     # Sanitize our founderless regions list a wee bit, 'cause at the moment, it's xml, and xml is gross.
@@ -418,6 +420,13 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="File to output the debug log to. Defaults to debug.log.",
 )
 @click.option(
+    "--dump_file",
+    "-d",
+    default="./region.xml.gz",
+    type=str,
+    help="Filename of the regional data dump spyglass will use"
+)
+@click.option(
     "--suppress-logging", "-s", is_flag=True, help="Suppress creating a debug log file."
 )
 @click.option(
@@ -447,6 +456,7 @@ def cli_wrapper(
     out_file,
     suppress_logging,
     logging_file,
+    dump_file,
     wfe,
     embassies,
     minor_speed,
@@ -474,6 +484,7 @@ def cli_wrapper(
         update_times={"minor": minor_speed, "major": major_speed},
         filename=out_file,
         suppress_logging=suppress_logging,
+        data_dump=dump_file,
         logpath=logging_file,
         speed_override=speed_override,
         quiet=silent,
