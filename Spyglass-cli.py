@@ -12,7 +12,7 @@ from typing import List
 from xml.etree import ElementTree
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
-VERSION = "2.0.1"
+VERSION = "2.0.1.2"
 
 # Spyglass
 # Source code by Devi aka Panzer Vier
@@ -62,7 +62,7 @@ def download_dump() -> None:
     :return: None
     """
     dump_request = get(
-        "https://www.nationstates.net/pages/regions.xml.gz", stream=True
+        "https://www.nationstates.net/pages/regions.xml.gz", headers=headers, stream=True
     )
     with open("regions.xml.gz", "wb") as data_dump:
         for chunk in dump_request.iter_content(chunk_size=16 * 1024):
