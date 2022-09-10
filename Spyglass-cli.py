@@ -87,6 +87,8 @@ if "-h" in argv or "--help" in argv:
                   the current working directory.
      -l PATH      Write debug log to specified path.
      -m           Generate a minimized sheet without WFEs and embassies
+     -maj LENGTH  Specify custom length of major update, in seconds.
+     -min LENGTH  Specify custom length of minor update, in seconds.
     """
     )
     print(
