@@ -109,6 +109,14 @@ YMD = f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}"
 if "-n" in argv:
     interactive = False
     UAgent = argv[argv.index("-n") + 1]
+
+    if "-min" in argv:
+        MinorTime = int(argv[argv.index("-min") + 1])
+    if "-maj" in argv:
+        MajorTime = int(argv[argv.index("-maj") + 1])
+    if "-min" in argv or "-maj" in argv:
+        SpeedOverride = True
+
 else:
     print(f"Spyglass {VERSION}: Generate NationStates region update timesheets.")
     UAgent = input("Nation Name: ")
