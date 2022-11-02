@@ -12,7 +12,7 @@ from typing import List
 from xml.etree import ElementTree
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
-VERSION = "2.0.2"
+VERSION = "2.0.3"
 
 # Spyglass
 # Source code by Devi aka Panzer Vier
@@ -200,13 +200,11 @@ write_log("INFO Searching for data dump...")
 dump_path = Path("./regions.xml.gz")
 if interactive:
     if dump_path.exists() and dump_path.is_file():
-        if (
-                query(
-                    "Existing data dump found. Do you want to re-download the latest dump? (y/n, defaults to y) ",
-                    ["y", "n", ""],
-                )
-                == "y"
-        ):
+        resp = query(
+            "Existing data dump found. Do you want to re-download the latest dump? (y/n, defaults to y) ",
+            ["y", "n", ""],
+        )
+        if resp == "y" or resp == "":
             write_log("INFO Found data dump, but re-downloading the latest..")
             print("Pulling data dump...")
             download_dump()
