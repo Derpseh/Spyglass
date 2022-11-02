@@ -87,6 +87,8 @@ if "-h" in argv or "--help" in argv:
                   the current working directory.
      -l PATH      Write debug log to specified path.
      -m           Generate a minimized sheet without WFEs and embassies
+     -maj LENGTH  Specify custom length of major update, in seconds.
+     -min LENGTH  Specify custom length of minor update, in seconds.
     """
     )
     print(
@@ -109,6 +111,14 @@ YMD = f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}"
 if "-n" in argv:
     interactive = False
     UAgent = argv[argv.index("-n") + 1]
+
+    if "-min" in argv:
+        MinorTime = int(argv[argv.index("-min") + 1])
+    if "-maj" in argv:
+        MajorTime = int(argv[argv.index("-maj") + 1])
+    if "-min" in argv or "-maj" in argv:
+        SpeedOverride = True
+
 else:
     print(f"Spyglass {VERSION}: Generate NationStates region update timesheets.")
     UAgent = input("Nation Name: ")

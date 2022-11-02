@@ -41,6 +41,8 @@ underscores instead of spaces.
 the current working directory.
 -l PATH      Write debug log to specified path.
 -m           Generate a minimized sheet without WFEs and embassies
+-maj LENGTH  Specify custom length of major update, in seconds.
+-min LENGTH  Specify custom length of minor update, in seconds.
 
 If run without arguments, Spyglass runs in interactive mode and outputs to its
 working directory.
