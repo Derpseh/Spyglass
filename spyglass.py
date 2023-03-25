@@ -146,6 +146,13 @@ parser.add_argument(
     action="store_true",
     required=False,
 )
+parser.add_argument(
+    "-p",
+    "--path",
+    help="Path to the data dump. Defaults to 'regions.xml.gz'.",
+    default="./regions.xml.gz",
+    required=False,
+)
 
 args = parser.parse_args()
 
@@ -193,7 +200,7 @@ logger.info("Checking if there is a data dump downloaded.")
 # Ziz: If a data dump is detected in the current directory, ask if user wants to re-download latest dump
 # Ziz: Otherwise just download the latest data dump if nothing is detected
 
-dump_path = Path("./regions.xml.gz")
+dump_path = Path(args.path)
 if interactive:
     if dump_path.exists() and dump_path.is_file():
         if (
@@ -235,7 +242,7 @@ pless = session.get(
 
 # Open up the data dump and parse it
 logger.info("Parsing data dump...")
-dump = gzip.open("regions.xml.gz", "rb").read()
+dump = gzip.open(args.path, "rb").read()
 
 # Ziz: Data dump soup, mmm... almost as tasty as people!
 # Aav, at some point in the past: Refactored old code to use zip. I did leave Ziz's cursed comment though
@@ -309,7 +316,9 @@ else:
     logger.info(f"Major set to {major}")
     logger.info(f"Minor set to {minor}")
 
-CumuNatList = [0]  # Per Devi, the first number needs to be zero so that the times reflect the start of update,
+CumuNatList = [
+    0
+]  # Per Devi, the first number needs to be zero so that the times reflect the start of update,
 # not the end
 
 for region in regions:
@@ -407,7 +416,9 @@ for counter, region in enumerate(regions):
     ws.cell(row=counter + 2, column=6).alignment = Alignment(horizontal="right")
     ws.cell(row=counter + 2, column=7).value = region["del_votes"]
     ws.cell(row=counter + 2, column=8).value = region["del_votes"] - 1
-    ws.cell(row=counter + 2, column=9).value = ",".join(region["embassies"]) if not minimize else " "
+    ws.cell(row=counter + 2, column=9).value = (
+        ",".join(region["embassies"]) if not minimize else " "
+    )
     ws.cell(row=counter + 2, column=10).value = region["wfe"] if not minimize else " "
     ws.cell(row=counter + 2, column=11).value = " "
     if region["del_votes"] == 0:
