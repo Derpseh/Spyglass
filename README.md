@@ -23,26 +23,25 @@ Spyglass currently runs in a command prompt window, but a graphical user interfa
 Some runtime flags are available for advanced users.
 
 ```commandline
-$ python Spyglass-cli.py -h
+$ python spyglass.py -h
 
-Spyglass 2.0: Generate NationStates region update timesheets.
+usage: Spyglass [-h] [-n NATION] [-o OUTFILE] [-m] [-s] [--minor MINOR] [--major MAJOR] [-d] [-p PATH]
 
-Developed by Panzer Vier, with additions by Khronion, Zizou, and Aav
+Spyglass 3.0.0: Generate NationStates region update timesheets. Developed by Panzer Vier, with additions by Khronion, Zizou, and Aav
 
-usage: .\Spyglass-cli.py [-h] [-n NATION] [-o OUTFILE] [-s | -l PATH]
+optional arguments:
+  -h, --help            show this help message and exit
+  -n NATION, --nation NATION
+                        Nation to use for authentication. Use underscores instead of spaces.
+  -o OUTFILE, --outfile OUTFILE
+                        Name of the output file. Defaults to 'spyglass.xlsx'.
+  -m, --minimize        Generate a minimized sheet without WFEs and embassies
+  -s, --suppress        Suppresses the creation of a debug log file
+  --minor MINOR         The length of minor update in seconds.
+  --major MAJOR         The length of major update in seconds.
+  -d, --dump            Do not download the latest data dump. Use the one in the current directory.
+  -p PATH, --path PATH  Path to the data dump. Defaults to 'regions.xml.gz'.
 
-Optional arguments:
--h           Show this help message and exit.
--n NATION    Specify Nation to identify user by. In order to comply with
-NationStates API rules, this must be the user's nation. Use
-underscores instead of spaces.
--o OUTFILE   File to output the generated timesheet in XLSX format to.
--s           Suppress creating a debug log file. Log files are written to
-the current working directory.
--l PATH      Write debug log to specified path.
--m           Generate a minimized sheet without WFEs and embassies
--maj LENGTH  Specify custom length of major update, in seconds.
--min LENGTH  Specify custom length of minor update, in seconds.
 
 If run without arguments, Spyglass runs in interactive mode and outputs to its
 working directory.
