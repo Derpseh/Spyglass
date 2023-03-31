@@ -196,6 +196,12 @@ except HTTPError:
     raise SystemExit("Authentication failure.")
 
 logger.info("Nation exists, proceeding.")
+session.headers.update(
+    {
+        "User-Agent": f"Spyglass/{VERSION} (github: https://github.com/Derpseh/Spyglass; user:{nation})"
+    }
+)
+logger.info("Updated useragent.")
 logger.info("Checking if there is a data dump downloaded.")
 # Ziz: If a data dump is detected in the current directory, ask if user wants to re-download latest dump
 # Ziz: Otherwise just download the latest data dump if nothing is detected
