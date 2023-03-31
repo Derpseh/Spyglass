@@ -2,7 +2,7 @@
 
 It is recommended that users set up a virtual environment using [venv](https://virtualenv.pypa.io/en/latest/), [pip-env](https://pipenv.pypa.io/en/latest/), [conda](https://docs.conda.io/en/latest/), or a similar tool when using Spyglass.
 
-Spyglass requires Python 3. Users may automatically install dependencies by running the following command:
+Spyglass requires Python 3.9 Users may automatically install dependencies by running the following command:
 
 ```commandline
 $ pip install -r requirements.txt
@@ -13,7 +13,7 @@ If `pip` fails, make sure that you are using the command associated with Python 
 Once packages are installed, Spyglass can be executed from the terminal directly:
 
 ```commandline
-$ python Spyglass-cli.py
+$ python spyglass.py
 ```
 
 ## Building Spyglass
@@ -25,10 +25,10 @@ OS-specific builds of Spyglass are generated using [pyInstaller](https://pyinsta
 Install pyInstaller and UPX, then run:
 
 ```commandline
-$ pyinstaller --clean Spyglass-cli.py -F -n Spyglass -c -i assets/Spyglass.icns
+$ pyinstaller --clean spyglass.py -F -n Spyglass -c -i assets/Spyglass.icns
 ```
 
 ### Windows
 ```commandline
-$ pyinstaller --clean Spyglass-cli.py -F -n Spyglass.exe -c -i Spyglass.ico
+$ pyinstaller --clean spyglass.py -F -n Spyglass.exe -c -i Spyglass.ico
 ```
