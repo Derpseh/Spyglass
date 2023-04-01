@@ -1,0 +1,53 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build Release
+
+env:
+  APP_NAME: spyglass.py
+  PKG_NAME: Spyglass
+
+
+# Controls when the workflow will run
+on: release
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+          - os: macos-latest
+            name: macOS
+            extension: intel
+
+          - os: ubuntu-latest
+            name: linux-amd64
+            extension: bin
+
+          - os: windows-latest
+            name: windows
+            extension: exe
+
+    steps:
+      # Runs a set of commands using the runners shell
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+
+      - name: Build with pyInstaller
+        run: |
+          echo "Building ${{ env.PKG_NAME }}-${{ github.ref_name }}-${{ matrix.name }}.${{ matrix.extension }}"
+          pip install -r requirements.txt
+          pip install pyinstaller
+          pyinstaller --onefile --console --name ${{ env.PKG_NAME }}-${{ github.ref_name }}-${{ matrix.name }}.${{ matrix.extension }} ${{ env.APP_NAME }} 
+
+      - name: Push Release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          files: dist/${{ env.PKG_NAME }}-${{ github.ref_name }}-${{ matrix.name }}.${{ matrix.extension }}

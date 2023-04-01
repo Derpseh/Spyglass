@@ -1,0 +1,3 @@
+openpyxl~=3.0
+requests~=2.27
+lxml ~= 4.9
