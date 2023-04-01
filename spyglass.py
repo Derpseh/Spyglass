@@ -187,9 +187,10 @@ logger.info("Session constructed")
 
 # Ensure that this nation actually exists
 try:
-    session.get(
+    req = session.get(
         f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nation}&q=region"
     )
+    req.raise_for_status()
 except HTTPError:
     logger.error("Nation does not exist.")
     print("The provided nation does not exist... terminating.")
