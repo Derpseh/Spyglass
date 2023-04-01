@@ -1,9 +1,7 @@
 from requests import Session
 from requests.exceptions import HTTPError
 import gzip
-from openpyxl import Workbook
-from openpyxl.styles import PatternFill, Alignment
-from openpyxl.styles.colors import Color
+import xlsxwriter
 from datetime import datetime
 from pathlib import Path
 import argparse
@@ -19,16 +17,6 @@ import logging
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
 VERSION = "3.0.0"
-
-# Color declarations because OpenPyXL removed them :^)
-RED = Color(rgb="FFFF0000")
-GREEN = Color(rgb="FF00FF00")
-YELLOW = Color(rgb="FFFFFF00")
-
-# PatternFill declarations
-redFill = PatternFill(start_color=RED, end_color=RED, fill_type="solid")
-greenFill = PatternFill(start_color=GREEN, end_color=GREEN, fill_type="solid")
-yellowFill = PatternFill(start_color=YELLOW, end_color=YELLOW, fill_type="solid")
 
 # Set up our default settings
 interactive = True
@@ -354,89 +342,93 @@ for region in regions:
 logger.info("Speeds calculated")
 
 # Create the spreadsheet
-wb = Workbook()
-ws = wb.active
-ws.title = "Spyglass Timesheet"
-ws.sheet_properties.tabColor = "FFB1B1"
+# https://stackoverflow.com/questions/75893105/removed-records-hyperlinks-when-opening-spreadsheet#comment133865708_75893105
+wb = xlsxwriter.Workbook(args.outfile, {'strings_to_urls': False})
+ws = wb.add_worksheet("Spyglass Timesheet")
+ws.set_tab_color("#FFB1B1")
 logger.info("Spreadsheet created!")
 
+# pattern of 1 indicates solid fill
+# https://xlsxwriter.readthedocs.io/format.html#set_pattern
+redFill = wb.add_format({"pattern": 1, "bg_color": "#FF0000"})
+greenFill = wb.add_format({"pattern": 1, "bg_color": "#00FF00"})
+yellowFill = wb.add_format({"pattern": 1, "bg_color": "#FFFF00"})
+
+alignRight = wb.add_format({"align": "right"})
+alignFill = wb.add_format({"align": "fill"})
+
 # Splashing some headers and stuff onto the spreadsheet for legibility purposes!
-ws["A1"].value = "Regions"
-ws["B1"].value = "Region Link"
-ws["C1"].value = "# Nations"
-ws["D1"].value = "Tot. Nations"
-ws["E1"].value = "Minor Upd. (est)"
+ws.write("A1", "Regions")
+ws.write("B1", "Region Link")
+ws.write("C1", "# Nations")
+ws.write("D1", "Tot. Nations")
+ws.write("E1", "Minor Upd. (est)")
 if SpeedOverride is True:
-    ws["F1"].value = "Major Upd. (est)"
+    ws.write("F1", "Major Upd. (est)")
 else:
-    ws["F1"].value = "Major Upd. (true)"
-ws["G1"].value = "Del. Votes"
-ws["H1"].value = "Del. Endos"
+    ws.write("F1", "Major Upd. (true)")
+ws.write("G1", "Del. Votes")
+ws.write("H1", "Del. Endos")
 if not minimize:
-    ws["I1"].value = "Embassies"
-ws["J1"].value = "WFE"
+    ws.write("I1", "Embassies")
+ws.write("J1", "WFE", alignRight)
 
-ws["L1"].value = "World "
-ws["M1"].value = "Data"
-ws["L2"].value = "Nations"
-ws["L3"].value = "Last Major"
-ws["L4"].value = "Secs/Nation"
-ws["L5"].value = "Nations/Sec"
-ws["L6"].value = "Last Minor"
-ws["L7"].value = "Secs/Nation"
-ws["L8"].value = "Nations/Sec"
-ws["L10"].value = "Spyglass Version"
-ws["L11"].value = "Date Generated"
-ws["M2"].value = CumuNatList[-1]
-ws["M3"].value = major
-ws["M4"].value = major / CumuNatList[-1]
-ws["M5"].value = 1 / (major / CumuNatList[-1])
-ws["M6"].value = minor
-ws["M7"].value = minor_per_nation
-ws["M8"].value = 1 / minor_per_nation
-ws["M10"].value = VERSION
-ws["M11"].value = f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}"
+# Write update stats and Spyglass metadata
+ws.write("L1", "World")
+ws.write("M1", "Data")
+ws.write("L2", "Nations")
+ws.write("L3", "Last Major")
+ws.write("L4", "Secs/Nation")
+ws.write("L5", "Nations/Sec")
+ws.write("L6", "Last Minor")
+ws.write("L7", "Secs/Nation")
+ws.write("L8", "Nations/Sec")
+ws.write("L10", "Spyglass Version")
+ws.write("L11", "Date Generated")
+ws.write("M2", CumuNatList[-1])
+ws.write("M3", major)
+ws.write("M4", major / CumuNatList[-1])
+ws.write("M5", 1 / (major / CumuNatList[-1]))
+ws.write("M6", minor)
+ws.write("M7", minor_per_nation)
+ws.write("M8", 1 / minor_per_nation)
+ws.write("M10", VERSION)
+ws.write("M11", f"{datetime.now().year}-{datetime.now().month}-{datetime.now().day}")
 
+# write region data
 for counter, region in enumerate(regions):
     name = region["name"]
+
+    fill = None
     if region["name"] in pless and region["exec"] is True:
-        ws.cell(row=counter + 2, column=1).fill = yellowFill
-        ws.cell(row=counter + 2, column=2).fill = yellowFill
+        fill = yellowFill
         name = f"{region['name']}~"
     if region["name"] in fless and region["name"] in pless:
-        ws.cell(row=counter + 2, column=1).fill = greenFill
-        ws.cell(row=counter + 2, column=2).fill = greenFill
+        fill = greenFill
         name = f"{region['name']}~"
     if region["name"] not in pless:
-        ws.cell(row=counter + 2, column=1).fill = redFill
-        ws.cell(row=counter + 2, column=2).fill = redFill
+        fill = redFill
         name = f"{region['name']}*"
 
-    ws.cell(row=counter + 2, column=1).value = name
-    ws.cell(row=counter + 2, column=2).value = region["url"]
-    ws.cell(row=counter + 2, column=3).value = region["num_nations"]
-    ws.cell(row=counter + 2, column=4).value = region["cumu_nations"]
-    ws.cell(row=counter + 2, column=5).value = region["minor"]
-    ws.cell(row=counter + 2, column=5).alignment = Alignment(horizontal="right")
-    ws.cell(row=counter + 2, column=6).value = region["major"]
-    ws.cell(row=counter + 2, column=6).alignment = Alignment(horizontal="right")
-    ws.cell(row=counter + 2, column=7).value = region["del_votes"]
-    ws.cell(row=counter + 2, column=8).value = region["del_votes"] - 1
-    ws.cell(row=counter + 2, column=9).value = (
-        ",".join(region["embassies"]) if not minimize else " "
-    )
-    ws.cell(row=counter + 2, column=10).value = region["wfe"] if not minimize else " "
-    ws.cell(row=counter + 2, column=11).value = " "
-    if region["del_votes"] == 0:
-        ws.cell(row=counter + 2, column=8).fill = redFill
+    ws.write(counter + 1, 0, name, fill)
+    ws.write(counter + 1, 1, region["url"], fill)
+    ws.write(counter + 1, 2, region["num_nations"])
+    ws.write(counter + 1, 3, region["cumu_nations"])
+    ws.write(counter + 1, 4, region["minor"], alignRight)
+    ws.write(counter + 1, 5, region["major"], alignRight)
+    ws.write(counter + 1, 6, region["del_votes"])
 
-sheet = wb["Spyglass Timesheet"]
-sheet.column_dimensions["A"].width = 45
-sheet["J1"].alignment = Alignment(horizontal="right")
+    ws.write(counter + 1, 7, region["del_votes"] - 1, redFill if region["del_votes"] == 0 else None)
+    
+    if not minimize:
+        ws.write(counter + 1, 8, ",".join(region["embassies"]), alignFill)
+        ws.write(counter + 1, 9, region["wfe"], alignFill)
+
+ws.set_column("A:A", 45)
 
 logger.info("Spreadsheet populated!")
 print("Saving spreadsheet...")
-wb.save(args.outfile)
+wb.close()
 
-logger.info(f"INFO Successfully saved to {args.outfile}")
+logger.info(f"Successfully saved to {args.outfile}")
 raise SystemExit(0)
