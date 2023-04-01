@@ -110,7 +110,7 @@ parser.add_argument(
     "-o",
     "--outfile",
     help="Name of the output file. Defaults to 'spyglass.xlsx'.",
-    default="spyglass.xlsx",
+    default=f"spyglass{datetime.now().year}-{datetime.now().month}-{datetime.now().day}.xlsx",
     required=False,
 )
 parser.add_argument(
