@@ -18,7 +18,7 @@ import logging
 # Yay more modifications & V3 rewrite (Aav)
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
-VERSION = "3.0.0"
+VERSION = "3.0.1"
 
 # Color declarations because OpenPyXL removed them :^)
 RED = Color(rgb="FFFF0000")
