@@ -437,6 +437,10 @@ sheet["J1"].alignment = Alignment(horizontal="right")
 
 logger.info("Spreadsheet populated!")
 print("Saving spreadsheet...")
+
+outfile_path = Path(args.outfile)
+outfile_path.parent.mkdir(parents=True, exist_ok=True)
+
 wb.save(args.outfile)
 
 logger.info(f"INFO Successfully saved to {args.outfile}")
