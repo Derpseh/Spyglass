@@ -438,8 +438,12 @@ sheet["J1"].alignment = Alignment(horizontal="right")
 logger.info("Spreadsheet populated!")
 print("Saving spreadsheet...")
 
-outfile_path = Path(args.outfile)
-outfile_path.parent.mkdir(parents=True, exist_ok=True)
+try:
+    outfile_path = Path(args.outfile)
+    outfile_path.parent.mkdir(parents=True, exist_ok=True)
+except FileExistsError: # if outfile_path.parent currently exists as a file
+    logger.error(f"{outfile_path.parent} already exists as a file.")
+    print(f"Could not save spreadsheet: {outfile_path.parent} already exists as a file.")
 
 wb.save(args.outfile)
 
