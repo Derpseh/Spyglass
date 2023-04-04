@@ -11,7 +11,7 @@ cd Spyglass
 # git checkout $(git describe --tags $(git rev-list --tags --max-count=1)) # Uncomment this line to get the latest release
 git checkout 3.0.1
 
-$py3 = python3 --version
+py3=$(python3 --version)
 # Check if python 3 is 3.9 or higher
 if [[ $py3 == *"3.9"* || $py3 == *"3.10"* || $py3 == *"3.11"* ]]; then
     echo "Python 3.9 or higher detected."
