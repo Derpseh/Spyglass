@@ -236,6 +236,10 @@ else:
         else:
             download_dump(session)
             logger.info("Download complete!")
+    else:
+        logger.info("No existing data dump found, downloading latest...")
+        download_dump(session)
+        logger.info("Download complete!")
 
 # Get the lists of founderless and passwordless regions
 logger.info("Getting founderless regions...")
