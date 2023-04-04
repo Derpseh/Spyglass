@@ -9,7 +9,7 @@ cd Spyglass
 # NOTE: Hardcoding this to v3.0.1 for now because releases after that
 # are not considered stable. Leaving in my tag search code for now though.
 # git checkout $(git describe --tags $(git rev-list --tags --max-count=1)) # Uncomment this line to get the latest release
-git checkout v3.0.1
+git checkout 3.0.1
 
 $py3 = python3 --version
 # Check if python 3 is 3.9 or higher
