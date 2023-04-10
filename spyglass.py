@@ -244,7 +244,7 @@ else:
 # Get the lists of founderless and passwordless regions
 logger.info("Getting founderless regions...")
 fless = session.get(
-    "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=founderless"
+    "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=governorless"
 ).text.split(",")
 logger.info("Getting passwordless regions...")
 pless = session.get(
@@ -328,13 +328,13 @@ else:
     logger.info(f"Minor set to {minor}")
 
 CumuNatList = [
-    0
+    0,
 ]  # Per Devi, the first number needs to be zero so that the times reflect the start of update,
 # not the end
 
 for region in regions:
     CumuNatList.append(CumuNatList[-1] + region["num_nations"])
-    region.update({"cumu_nations": CumuNatList[-1] + region["num_nations"]})
+    region.update({"cumu_nations": CumuNatList[-1]})
 logger.info("Cumulative nation list created!")
 logger.info(f"Total number of nations: {CumuNatList[-1]}")
 
