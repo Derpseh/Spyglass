@@ -334,7 +334,7 @@ CumuNatList = [
 
 for region in regions:
     CumuNatList.append(CumuNatList[-1] + region["num_nations"])
-    region.update({"cumu_nations": CumuNatList[-1] + region["num_nations"]})
+    region.update({"cumu_nations": CumuNatList[-1]})
 logger.info("Cumulative nation list created!")
 logger.info(f"Total number of nations: {CumuNatList[-1]}")
 
