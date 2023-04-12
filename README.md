@@ -10,7 +10,7 @@ To learn more about what information Spyglass provides, [view the documentation]
 ## Usage
 Windows and macOS users should use the pre-packaged release files for their operating system. These versions contain all the files needed to run Spyglass. Linux users should see the [instructions for setting up a development environment](docs/dev_environment.md).
 
-> **Important note**: Microsoft Defender Smartscreen may block execution of programs it doesn't recognize, like Spyglass. You may bypass these warnings by clicking "Run Anyway" on the Smartscreen warning dialog.
+> **Important note**: Microsoft Defender Smartscreen may block execution of programs it doesn't recognize, like Spyglass. They may also block the first attempt to connect to the internet. Browsers, including Chrome, may also flag the download of unknown executables as risky. You may bypass these warnings by clicking "Run Anyway" on the Smartscreen warning dialog.
 
 After downloading the latest version of Spyglass, run the program and follow the on-screen prompts. Spyglass will then create an Excel spreadsheet in the same directory where it is located.
 
