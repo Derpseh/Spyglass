@@ -176,6 +176,25 @@ else:
     nation = input("Please enter your nation name: ").lower().replace(" ", "_")
     logger.info(f"User entered nation: {nation}")
 
+
+# Ensure output path exists
+outfile_path = Path(args.outfile)
+
+try:
+    outfile_path.parent.mkdir(parents=True, exist_ok=True)
+    outfile_path.touch(exist_ok=False)
+except FileExistsError as exc:
+    print(f"The output file {args.outfile} already exists.")
+    if interactive and query("Override existing file? (y/n) ", ["y", "n", ""]) == "y":
+        outfile_path.touch(exist_ok=True)
+    else:
+        logger.error("Output file already exists.")
+        raise SystemExit(1) from exc
+except NotADirectoryError as exc:
+    logger.error("Output path includes invalid directory.")
+    print(f"The output path {args.outfile} contains something that is not a directory.")
+    raise SystemExit(1) from exc
+
 # Construct our requests session now that we have an useragent
 session = Session()
 session.headers.update(
@@ -437,13 +456,6 @@ sheet["J1"].alignment = Alignment(horizontal="right")
 
 logger.info("Spreadsheet populated!")
 print("Saving spreadsheet...")
-
-try:
-    outfile_path = Path(args.outfile)
-    outfile_path.parent.mkdir(parents=True, exist_ok=True)
-except FileExistsError: # if outfile_path.parent currently exists as a file
-    logger.error(f"{outfile_path.parent} already exists as a file.")
-    print(f"Could not save spreadsheet: {outfile_path.parent} already exists as a file.")
 
 wb.save(args.outfile)
 
