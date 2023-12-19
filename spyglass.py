@@ -341,8 +341,8 @@ if not SpeedOverride:
     last_region = regions[-1]
     first_region = regions[0]
     major = last_region["last_update"] - first_region["last_update"]
-    minor = int(region_list[-1].find("lastminorupdate").text) - int(
-        region_list[0].find("lastminorupdate").text
+    minor = int(region_list[-1].find("LASTMINORUPDATE").text) - int(
+        region_list[0].find("LASTMINORUPDATE").text
     )
     logger.info(f"Major calculated as {major}")
     logger.info(f"Minor set as {minor}")
