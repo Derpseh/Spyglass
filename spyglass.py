@@ -128,18 +128,6 @@ parser.add_argument(
     required=False,
 )
 parser.add_argument(
-    "--minor",
-    help="The length of minor update in seconds.",
-    default=3550,
-    required=False,
-)
-parser.add_argument(
-    "--major",
-    help="The length of major update in seconds.",
-    default=5350,
-    required=False,
-)
-parser.add_argument(
     "-d",
     "--dump",
     help="Do not download the latest data dump. Use the one in the current directory.",
@@ -153,6 +141,18 @@ parser.add_argument(
     default="./regions.xml.gz",
     required=False,
 )
+parser.add_argument(
+    "--minor",
+    help="The length of minor update in seconds.",
+    default=3550,
+    required=False,
+)
+parser.add_argument(
+    "--major",
+    help="The length of major update in seconds.",
+    default=5350,
+    required=False,
+)
 
 args = parser.parse_args()
 
@@ -163,6 +163,9 @@ if args.minimize:
     minimize = True  # Disable WFEs and embassies
 
 if args.major != 5350:
+    SpeedOverride = True  # Override the default update times
+
+if args.minor != 3550:
     SpeedOverride = True  # Override the default update times
 
 logger.info(f"Spyglass {VERSION} started")
@@ -269,6 +272,9 @@ logger.info("Getting passwordless regions...")
 pless = session.get(
     "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=-password"
 ).text.split(",")
+frontiers = session.get(
+    "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=frontier"
+).text.split(",")
 
 # Open up the data dump and parse it
 logger.info("Parsing data dump...")
@@ -327,10 +333,6 @@ for name, nation_count, del_votes, auth, time, wfe in zip(
     regions.append(_)
 logger.info("Region dictionary created!")
 
-# Get rid of that parsed XML
-# Gotta go FASSSSSSSTTTTTTT
-del region_list
-
 major = int(args.major)
 minor = int(args.minor)
 
@@ -339,12 +341,19 @@ if not SpeedOverride:
     last_region = regions[-1]
     first_region = regions[0]
     major = last_region["last_update"] - first_region["last_update"]
+    minor = int(region_list[-1].find("lastminorupdate").text) - int(
+        region_list[0].find("lastminorupdate").text
+    )
     logger.info(f"Major calculated as {major}")
     logger.info(f"Minor set as {minor}")
 else:
     logger.info("Speed override enabled, skipping major calculation.")
     logger.info(f"Major set to {major}")
     logger.info(f"Minor set to {minor}")
+
+# Get rid of that parsed XML
+# Gotta go FASSSSSSSTTTTTTT
+del region_list
 
 CumuNatList = [
     0,
@@ -424,14 +433,24 @@ ws["M11"].value = f"{datetime.now().year}-{datetime.now().month}-{datetime.now()
 for counter, region in enumerate(regions):
     name = region["name"]
     if region["name"] in pless and region["exec"] is True:
+        # Has no password and has an executive delegate
+        # Founder could potentially exist
         ws.cell(row=counter + 2, column=1).fill = yellowFill
         ws.cell(row=counter + 2, column=2).fill = yellowFill
         name = f"{region['name']}~"
     if region["name"] in fless and region["name"] in pless:
+        # Has no password and no founder/founder CTEd
         ws.cell(row=counter + 2, column=1).fill = greenFill
         ws.cell(row=counter + 2, column=2).fill = greenFill
         name = f"{region['name']}~"
+    if region["name"] in frontiers:
+        # Frontiers do not have a founder (well, a governor, but ssssh, I'm still using the old terms)
+        ws.cell(row=counter + 2, column=1).fill = greenFill
+        ws.cell(row=counter + 2, column=2).fill = greenFill
+        name = f"{region['name']}^"
     if region["name"] not in pless:
+        # Region has a password
+        # Unraidable :(
         ws.cell(row=counter + 2, column=1).fill = redFill
         ws.cell(row=counter + 2, column=2).fill = redFill
         name = f"{region['name']}*"
