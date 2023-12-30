@@ -18,7 +18,7 @@ import logging
 # Yay more modifications & V3 rewrite (Aav)
 
 # UPDATE THIS EVERY TIME A NEW RELEASE IS PACKAGED
-VERSION = "3.0.1"
+VERSION = "3.0.4"
 
 # Color declarations because OpenPyXL removed them :^)
 RED = Color(rgb="FFFF0000")
@@ -128,18 +128,6 @@ parser.add_argument(
     required=False,
 )
 parser.add_argument(
-    "--minor",
-    help="The length of minor update in seconds.",
-    default=3550,
-    required=False,
-)
-parser.add_argument(
-    "--major",
-    help="The length of major update in seconds.",
-    default=5350,
-    required=False,
-)
-parser.add_argument(
     "-d",
     "--dump",
     help="Do not download the latest data dump. Use the one in the current directory.",
@@ -151,6 +139,18 @@ parser.add_argument(
     "--path",
     help="Path to the data dump. Defaults to 'regions.xml.gz'.",
     default="./regions.xml.gz",
+    required=False,
+)
+parser.add_argument(
+    "--minor",
+    help="The length of minor update in seconds.",
+    default=3550,
+    required=False,
+)
+parser.add_argument(
+    "--major",
+    help="The length of major update in seconds.",
+    default=5350,
     required=False,
 )
 
@@ -165,6 +165,9 @@ if args.minimize:
 if args.major != 5350:
     SpeedOverride = True  # Override the default update times
 
+if args.minor != 3550:
+    SpeedOverride = True  # Override the default update times
+
 logger.info(f"Spyglass {VERSION} started")
 logger.info(f"Starting with arguments: {args}")
 
@@ -175,6 +178,25 @@ else:
     # We need to get a nation to set as the useragent for the session
     nation = input("Please enter your nation name: ").lower().replace(" ", "_")
     logger.info(f"User entered nation: {nation}")
+
+
+# Ensure output path exists
+outfile_path = Path(args.outfile)
+
+try:
+    outfile_path.parent.mkdir(parents=True, exist_ok=True)
+    outfile_path.touch(exist_ok=False)
+except FileExistsError as exc:
+    print(f"The output file {args.outfile} already exists.")
+    if interactive and query("Override existing file? (y/n) ", ["y", "n", ""]) == "y":
+        outfile_path.touch(exist_ok=True)
+    else:
+        logger.error("Output file already exists.")
+        raise SystemExit(1) from exc
+except NotADirectoryError as exc:
+    logger.error("Output path includes invalid directory.")
+    print(f"The output path {args.outfile} contains something that is not a directory.")
+    raise SystemExit(1) from exc
 
 # Construct our requests session now that we have an useragent
 session = Session()
@@ -244,11 +266,14 @@ else:
 # Get the lists of founderless and passwordless regions
 logger.info("Getting founderless regions...")
 fless = session.get(
-    "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=founderless"
+    "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=governorless"
 ).text.split(",")
 logger.info("Getting passwordless regions...")
 pless = session.get(
     "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=-password"
+).text.split(",")
+frontiers = session.get(
+    "https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags=frontier"
 ).text.split(",")
 
 # Open up the data dump and parse it
@@ -308,10 +333,6 @@ for name, nation_count, del_votes, auth, time, wfe in zip(
     regions.append(_)
 logger.info("Region dictionary created!")
 
-# Get rid of that parsed XML
-# Gotta go FASSSSSSSTTTTTTT
-del region_list
-
 major = int(args.major)
 minor = int(args.minor)
 
@@ -320,6 +341,9 @@ if not SpeedOverride:
     last_region = regions[-1]
     first_region = regions[0]
     major = last_region["last_update"] - first_region["last_update"]
+    minor = int(region_list[-1].find("LASTMINORUPDATE").text) - int(
+        region_list[0].find("LASTMINORUPDATE").text
+    )
     logger.info(f"Major calculated as {major}")
     logger.info(f"Minor set as {minor}")
 else:
@@ -327,14 +351,18 @@ else:
     logger.info(f"Major set to {major}")
     logger.info(f"Minor set to {minor}")
 
+# Get rid of that parsed XML
+# Gotta go FASSSSSSSTTTTTTT
+del region_list
+
 CumuNatList = [
-    0
+    0,
 ]  # Per Devi, the first number needs to be zero so that the times reflect the start of update,
 # not the end
 
 for region in regions:
+    region.update({"cumu_nations": CumuNatList[-1]})
     CumuNatList.append(CumuNatList[-1] + region["num_nations"])
-    region.update({"cumu_nations": CumuNatList[-1] + region["num_nations"]})
 logger.info("Cumulative nation list created!")
 logger.info(f"Total number of nations: {CumuNatList[-1]}")
 
@@ -405,14 +433,24 @@ ws["M11"].value = f"{datetime.now().year}-{datetime.now().month}-{datetime.now()
 for counter, region in enumerate(regions):
     name = region["name"]
     if region["name"] in pless and region["exec"] is True:
+        # Has no password and has an executive delegate
+        # Founder could potentially exist
         ws.cell(row=counter + 2, column=1).fill = yellowFill
         ws.cell(row=counter + 2, column=2).fill = yellowFill
         name = f"{region['name']}~"
     if region["name"] in fless and region["name"] in pless:
+        # Has no password and no founder/founder CTEd
         ws.cell(row=counter + 2, column=1).fill = greenFill
         ws.cell(row=counter + 2, column=2).fill = greenFill
         name = f"{region['name']}~"
+    if region["name"] in frontiers:
+        # Frontiers do not have a founder (well, a governor, but ssssh, I'm still using the old terms)
+        ws.cell(row=counter + 2, column=1).fill = greenFill
+        ws.cell(row=counter + 2, column=2).fill = greenFill
+        name = f"{region['name']}^"
     if region["name"] not in pless:
+        # Region has a password
+        # Unraidable :(
         ws.cell(row=counter + 2, column=1).fill = redFill
         ws.cell(row=counter + 2, column=2).fill = redFill
         name = f"{region['name']}*"
@@ -441,6 +479,7 @@ sheet["J1"].alignment = Alignment(horizontal="right")
 
 logger.info("Spreadsheet populated!")
 print("Saving spreadsheet...")
+
 wb.save(args.outfile)
 
 logger.info(f"INFO Successfully saved to {args.outfile}")
