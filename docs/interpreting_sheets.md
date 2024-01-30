@@ -15,12 +15,12 @@ The following table explains the layout of a Spyglass spreadsheet.
 | B      | Region Link        | Clickable hyperlink to region in NationStates                                                                   |
 | C      | # of Nations       | Region population                                                                                               |
 | D      | Tot Nations        | Total population for all regions up to and including this region<br/>_Used to calculate estimated update times_ |
-| E      | Minor Upd. (est)   | Predicted time of region's minor update                                                                         |  
+| E      | Minor Upd. (est)   | Predicted time of region's minor update                                                                         |
 | F      | Major Upd. (true)  | Most recently observed region major update time<br/>_Only shown if update lengths are not manually specified_   |
-| F      | Major Upd. (est)   | Predicted time of region's major update <br/>_Only shown if update lengths are manually specified_              | 
+| F      | Major Upd. (est)   | Predicted time of region's major update <br/>_Only shown if update lengths are manually specified_              |
 | G      | Del. Votes         | Voting power for the region's world assembly delegate (one less than the delegate's endorsements)               |
 | H      | Del. Endos         | Number of endorsements on the region's world assembly delegate                                                  |
-| I      | Embassies          | Comma-delimited list of regional embassies                                                                      |
+| I      | Embassies          | Comma-delimited list of regional embassies (or the first 32,767 characters of that list)                        |
 | J      | WFE                | Preview of region world factbook entry                                                                          |
 
 
